@@ -44,6 +44,11 @@ void sort(int* array, int length) {
     }
 }
 
+void freeArray(int* array) {
+    free(array);
+    array = NULL;
+}
+
 
 int main() {
     int length = 100;
@@ -52,4 +57,5 @@ int main() {
     printArray(array, length);
     sort(array, length);
     printArray(array, length);
+    freeArray();
 }

@@ -8,7 +8,7 @@ Modules:
     thread listening to UDP: 
         handle commands from user
     
-    potentiometer via Analog to Digital: 
+    potentiometer via Analog to Digital: (Ryan) 
         set array size
     
     14-Seg display vis I2C: 

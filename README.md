@@ -11,5 +11,5 @@ Modules:
     potentiometer via Analog to Digital: (Ryan) 
         set array size
     
-    14-Seg display vis I2C: 
+    14-Seg display vis I2C: (Ryan)
         set both numbers to different visual

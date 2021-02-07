@@ -57,5 +57,5 @@ int main() {
     printArray(array, length);
     sort(array, length);
     printArray(array, length);
-    freeArray();
+    freeArray(array);
 }

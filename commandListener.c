@@ -1,3 +1,10 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <netdb.h>
+#include <string.h>
+#include <unistd.h>
+#include <pthread.h>
+
 #include "commandListener.h"
 
 #define MAX_LEN 1500  // 1500 bytes max in UDP packet
@@ -31,53 +38,46 @@ static void init_socket() {
 }
 
 
-// void* receiverThread(void *arg) {
+/*
+    Thread loop:
+        wait for incoming command
+        received command:
+            if count/get/length/array, pull from other module
+            if help, return pre-made summary
+            if shutdown, call shutdown command
+        reply to message with response
+
+*/
+
+
+void* receiverThread(void *arg) {
     
-//     while(!isShutdown() && !termCharEntered) {
+    while(!isShutdown() && !termCharEntered) {
         
-//         messageLen = recvfrom(s_socketDescriptor, localBuffer, MSG_MAX_LEN, 0 , (struct sockaddr *) s_sinRemote, &s_sin_len);
+        messageLen = recvfrom(s_socketDescriptor, localBuffer, MSG_MAX_LEN, 0 , (struct sockaddr *) s_sinRemote, &s_sin_len);
         
-//         messageReceived = (char*)malloc(MSG_MAX_LEN*sizeof(char)); // malloc space for next message
-//         memcpy(messageReceived, localBuffer, messageLen);
+        messageReceived = (char*)malloc(MSG_MAX_LEN*sizeof(char)); // malloc space for next message
+        memcpy(messageReceived, localBuffer, messageLen);
 
-//         // CASE: other user entered termination character, stop receiving data
-//         if (checkForTerminationChar(messageReceived)) {
-//             termCharEntered = true;
-//         }
+        // TODO CASE: user sent STOP, call shutdown
 
-//         // CASE: user did not enter termination character - enqueue message for Sender
-//         addToIncomingMessageBuffer(messageReceived); 
-//         // once enqueued for output, let it handle freeing the message
-//         messageReceived = NULL;
-//     }
+        // TODO CASE: user sent "count"/"get"/"length"/"array", retrieve info from array module
 
-//     return NULL;
+        // TODO CASE: user sent "help", send help string
 
-// }
+        // TODO get counterparty address info from message
 
+        // reply with message
+        int i = sendto(s_socketDescriptor, messageToSend, strlen(messageToSend), 
+                        0, (struct sockaddr *) s_sinRemote, s_sin_len);
+        
+        if (i == -1){
+            printf("Socket Error: %s\n", strerror(errno));
+        }
 
-// void addToIncomingMessageBuffer(char* message) {
-//     pthread_mutex_lock(pMutexBufferModify);
-//     {
-//         while (List_prepend(pMessageBuffer, message) == -1) {
-//             //CASE: buffer is full - block this thread until Output 
-//             //      removes an item and signals condition variable
-//             pthread_cond_wait(pCondBufferFull, pMutexBufferModify);
-//         }
+    }
 
-//         // CASE: Output thread may be blocked waiting for populated
-//         //       buffer - signal wake up
-//         pthread_cond_signal(pCondBufferEmpty);
-//     }
-//     pthread_mutex_unlock(pMutexBufferModify);
-// }
+    return NULL;
 
+}
 
-// void receiverShutdown(void) {
-//     pthread_cancel(threadPID);
-//     pthread_join(threadPID, NULL);
-
-//     // TODO free heap memory
-//     free(messageReceived);
-//     messageReceived = NULL;
-// }

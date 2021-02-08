@@ -14,17 +14,21 @@
 static struct sockaddr_in sin;
 static int socketDescriptor;
 
+static void socketInit();
+static void listenerThread();
+
+
 void receiverInit() {
     
     init_socket();
 
     //TODO start thread
-    pthread_create(&threadPID, NULL, receiverThread, NULL);
+    pthread_create(&threadPID, NULL, listenerThread, NULL);
 
 }
 
 
-static void init_socket() {
+static void socketInit() {
 
     // initialize sockets
     memset(&sin, 0, sizeof(sin));
@@ -50,9 +54,9 @@ static void init_socket() {
 */
 
 
-void* receiverThread(void *arg) {
+static void* listenerThread(void *arg) {
     
-    while(!isShutdown() && !termCharEntered) {
+    while(!isShutdown()) {
         
         messageLen = recvfrom(s_socketDescriptor, localBuffer, MSG_MAX_LEN, 0 , (struct sockaddr *) s_sinRemote, &s_sin_len);
         

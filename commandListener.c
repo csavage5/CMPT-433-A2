@@ -117,6 +117,9 @@ static void* listenerThread(void *arg) {
             printf("Reply Error: %s\n", strerror(errno));
         }
 
+        // wipe messageBuffer for next command
+        memcpy(pMessage, messageBuffer, messageLen);
+
     }
 
     return NULL;
@@ -130,8 +133,10 @@ void detectCommands() {
     char *token = NULL;
     commands[0] = NULL;
     commands[1] = NULL;
-
-    while (i < 2 && (token = strtok(messageBuffer, " ")) != NULL ) {
+    
+    token = strtok(messageBuffer, " ");
+   
+    while (i < 2 && token != NULL ) {
         // will be MAX 2 tokens to the command
         
         // CASE: token contains a newline character - remove it
@@ -140,6 +145,7 @@ void detectCommands() {
             *newline = '\0';
         }
         commands[i] = token;   
+        token = strtok(NULL, " ");
         i += 1;
     }
     

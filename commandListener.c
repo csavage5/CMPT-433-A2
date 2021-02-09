@@ -12,6 +12,8 @@
 #define MAX_LEN 1500  // 1500 bytes max in UDP packet
 #define PORT 12345
 
+static pthread_t threadPID;
+
 static struct sockaddr_in sinLocal;
 static unsigned int sin_len;
 static int socketDescriptor;
@@ -65,11 +67,12 @@ static void* listenerThread(void *arg) {
     struct sockaddr_in sinRemote;
     unsigned int sinRemote_len;
 
-    static int messageLen; // tracks # of bytes received from packet - -1 if error
+    static int messageLen; // tracks # of bytes received from packet, -1 if error
 
 
     pMessage = (char*)malloc(MAX_LEN * sizeof(char)); // malloc space for outgoing message
     memcpy(pMessage, messageBuffer, messageLen);
+    strcpy(pMessage, "Hello there!\n");
 
     while(!isShutdown()) {
         
@@ -77,6 +80,8 @@ static void* listenerThread(void *arg) {
         // sinRemote captures counterparty address information
         messageLen = recvfrom(socketDescriptor, messageBuffer, MAX_LEN, 0, (struct sockaddr *) &sinRemote, &sinRemote_len);
         
+        printf("Received %s", messageBuffer);
+
         // TODO CASE: user sent "stop", call shutdown
 
         // TODO CASE: user sent "count"/"get"/"length"/"array", retrieve info from array module
@@ -107,4 +112,13 @@ static void* listenerThread(void *arg) {
     // TODO free heap memory
     free(pMessage);
     pMessage = NULL;
+}
+
+int main() {
+    receiverInit();
+    int counter = 0;
+    while(1){
+        counter += 1;
+    }   
+    return 0;
 }

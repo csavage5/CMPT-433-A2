@@ -74,8 +74,8 @@ static void* listenerThread(void *arg) {
     memcpy(pMessage, messageBuffer, messageLen);
     strcpy(pMessage, "Hello there!\n");
 
-    while(!isShutdown()) {
-        
+    //while(!isShutdown()) {
+    while(1) {
 
         // sinRemote captures counterparty address information
         messageLen = recvfrom(socketDescriptor, messageBuffer, MAX_LEN, 0, (struct sockaddr *) &sinRemote, &sinRemote_len);
@@ -103,7 +103,7 @@ static void* listenerThread(void *arg) {
 
 }
 
- void shutdown(void) {
+ void listenerShutdown(void) {
     pthread_cancel(threadPID);
     pthread_join(threadPID, NULL);
 

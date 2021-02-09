@@ -20,7 +20,7 @@ static int socketDescriptor;
 
 static char *pMessage;
 static char messageBuffer[MAX_LEN];
-static char commands[2];
+static char *commands[2];
 
 static void socketInit();
 static void* listenerThread(void *arg);
@@ -86,27 +86,27 @@ static void* listenerThread(void *arg) {
 
         // sinRemote captures counterparty address information
         messageLen = recvfrom(socketDescriptor, messageBuffer, MAX_LEN, 0, (struct sockaddr *) &sinRemote, &sinRemote_len);
-        printf("Received %s", messageBuffer);
+        printf("Received %s\n", messageBuffer);
 
         if (messageLen == -1) {
             printf("Receive Error: %s\n", strerror(errno));
         }
 
         detectCommands();
+        printf("0: %s, 1: %s\n", commands[0], commands[1]);
 
         // TODO CASE: user sent "stop", call shutdown
-        if (strcmp("stop", &commands[0]) == 0) {
-            printf("Received command: shutdown");
+        if (strcmp("stop", commands[0]) == 0) {
+            printf("Received command: shutdown\n");
             listenerShutdown();
-            return NULL;
         }
 
         // TODO CASE: user sent "count"/"get"/"length"/"array", retrieve info from array module
 
         // TODO CASE: user sent "help", send help string
-        if (strcmp("help", &commands[0]) == 0) {
-            printf("Received command: help");
-            strcpy(pMessage, "Commands: help, get, ...");
+        else if (strcmp("help", commands[0]) == 0) {
+            printf("Received command: help\n");
+            strcpy(pMessage, "Commands: help, get, ...\n");
         }
 
         // reply with message
@@ -126,12 +126,20 @@ static void* listenerThread(void *arg) {
 void detectCommands() {
 
     int i = 0;
+    char *newline = 0;
     char *token = NULL;
-    memset(commands, 0, sizeof(commands));
+    commands[0] = NULL;
+    commands[1] = NULL;
 
     while (i < 2 && (token = strtok(messageBuffer, " ")) != NULL ) {
         // will be MAX 2 tokens to the command
-        commands[i] = *token;   
+        
+        // CASE: token contains a newline character - remove it
+        // adapted from https://stackoverflow.com/questions/9628637/how-can-i-get-rid-of-n-from-string-in-c
+        if ( (newline = strchr(token, '\n')) != NULL) {
+            *newline = '\0';
+        }
+        commands[i] = token;   
         i += 1;
     }
     
@@ -146,6 +154,7 @@ void listenerShutdown() {
     // free heap memory
     free(pMessage);
     pMessage = NULL;
+    printf("Module [commandListener] shutting down...\n");
 }
 
 int main() {

@@ -65,7 +65,7 @@ static void* listenerThread(void *arg) {
     socketInit();
 
     struct sockaddr_in sinRemote;
-    unsigned int sinRemote_len;
+    unsigned int sinRemote_len = sizeof(sinRemote);
 
     static int messageLen; // tracks # of bytes received from packet, -1 if error
 
@@ -79,7 +79,11 @@ static void* listenerThread(void *arg) {
 
         // sinRemote captures counterparty address information
         messageLen = recvfrom(socketDescriptor, messageBuffer, MAX_LEN, 0, (struct sockaddr *) &sinRemote, &sinRemote_len);
-        
+
+        if (messageLen == -1) {
+            printf("Receive Error: %s\n", strerror(errno));
+        }
+
         printf("Received %s", messageBuffer);
 
         // TODO CASE: user sent "stop", call shutdown
@@ -94,7 +98,7 @@ static void* listenerThread(void *arg) {
                         0, (struct sockaddr *) &sinRemote, sinRemote_len);
         
         if (i == -1) {
-            printf("Socket Error: %s\n", strerror(errno));
+            printf("Reply Error: %s\n", strerror(errno));
         }
 
     }

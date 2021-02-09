@@ -20,9 +20,12 @@ static int socketDescriptor;
 
 static char *pMessage;
 static char messageBuffer[MAX_LEN];
+static char commands[2];
 
 static void socketInit();
 static void* listenerThread(void *arg);
+void detectCommands();
+void listenerShutdown();
 
 
 void receiverInit() {
@@ -44,7 +47,11 @@ static void socketInit() {
 
     // create and bind to socket
     socketDescriptor = socket(PF_INET, SOCK_DGRAM, 0);
-    bind(socketDescriptor, (struct sockaddr*) &sinLocal, sin_len);
+    int err = bind(socketDescriptor, (struct sockaddr*) &sinLocal, sin_len);
+
+    if (err == -1) {
+        printf("Bind Error: %s\n", strerror(errno));
+    }
 }
 
 
@@ -79,19 +86,28 @@ static void* listenerThread(void *arg) {
 
         // sinRemote captures counterparty address information
         messageLen = recvfrom(socketDescriptor, messageBuffer, MAX_LEN, 0, (struct sockaddr *) &sinRemote, &sinRemote_len);
+        printf("Received %s", messageBuffer);
 
         if (messageLen == -1) {
             printf("Receive Error: %s\n", strerror(errno));
         }
 
-        printf("Received %s", messageBuffer);
+        detectCommands();
 
         // TODO CASE: user sent "stop", call shutdown
+        if (strcmp("stop", &commands[0]) == 0) {
+            printf("Received command: shutdown");
+            listenerShutdown();
+            return NULL;
+        }
 
         // TODO CASE: user sent "count"/"get"/"length"/"array", retrieve info from array module
 
         // TODO CASE: user sent "help", send help string
-
+        if (strcmp("help", &commands[0]) == 0) {
+            printf("Received command: help");
+            strcpy(pMessage, "Commands: help, get, ...");
+        }
 
         // reply with message
         int i = sendto(socketDescriptor, pMessage, strlen(pMessage), 
@@ -107,13 +123,27 @@ static void* listenerThread(void *arg) {
 
 }
 
- void listenerShutdown(void) {
+void detectCommands() {
+
+    int i = 0;
+    char *token = NULL;
+    memset(commands, 0, sizeof(commands));
+
+    while (i < 2 && (token = strtok(messageBuffer, " ")) != NULL ) {
+        // will be MAX 2 tokens to the command
+        commands[i] = *token;   
+        i += 1;
+    }
+    
+}
+
+void listenerShutdown() {
     pthread_cancel(threadPID);
     pthread_join(threadPID, NULL);
 
-    // TODO close socket
-
-    // TODO free heap memory
+    // close socket
+    close(socketDescriptor);
+    // free heap memory
     free(pMessage);
     pMessage = NULL;
 }

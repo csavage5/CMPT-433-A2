@@ -127,6 +127,9 @@ static void* listenerThread(void *arg) {
 }
 
 void detectCommands() {
+    // adapted from: 
+    //   https://stackoverflow.com/questions/9628637/how-can-i-get-rid-of-n-from-string-in-c
+    //   https://en.cppreference.com/w/cpp/string/byte/strtok
 
     int i = 0;
     char *newline = 0;
@@ -140,7 +143,6 @@ void detectCommands() {
         // will be MAX 2 tokens to the command
         
         // CASE: token contains a newline character - remove it
-        // adapted from https://stackoverflow.com/questions/9628637/how-can-i-get-rid-of-n-from-string-in-c
         if ( (newline = strchr(token, '\n')) != NULL) {
             *newline = '\0';
         }

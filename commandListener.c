@@ -8,6 +8,7 @@
 
 
 #include "commandListener.h"
+#include "shutdownManager.h"
 
 #define MAX_LEN 1500  // 1500 bytes max in UDP packet
 #define PORT 12345
@@ -24,11 +25,10 @@ static char *commands[2];
 
 static void socketInit();
 static void* listenerThread(void *arg);
-void detectCommands();
-void commandListener_shutdown();
+static void detectCommands();
 
 
-void receiverInit() {
+void commandListener_init() {
 
     //TODO start thread
     pthread_create(&threadPID, NULL, listenerThread, NULL);
@@ -98,6 +98,7 @@ static void* listenerThread(void *arg) {
         // TODO CASE: user sent "stop", call shutdown
         if (strcmp("stop", commands[0]) == 0) {
             printf("Received command: shutdown\n");
+            sm_startShutdown();
             commandListener_shutdown();
         }
 
@@ -107,6 +108,10 @@ static void* listenerThread(void *arg) {
         else if (strcmp("help", commands[0]) == 0) {
             printf("Received command: help\n");
             strcpy(pMessage, "Commands: help, get, ...\n");
+        }
+
+        else {
+            strcpy(pMessage, "Error: invalid command\n");
         }
 
         // reply with message
@@ -126,7 +131,7 @@ static void* listenerThread(void *arg) {
 
 }
 
-void detectCommands() {
+static void detectCommands() {
 
     int i = 0;
     char *newline = 0;
@@ -157,17 +162,9 @@ void commandListener_shutdown() {
 
     // close socket
     close(socketDescriptor);
+
     // free heap memory
     free(pMessage);
     pMessage = NULL;
     printf("Module [commandListener] shutting down...\n");
-}
-
-int main() {
-    receiverInit();
-    int counter = 0;
-    while(1){
-        counter += 1;
-    }   
-    return 0;
 }

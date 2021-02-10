@@ -11,9 +11,11 @@ i2c:
 
 clean:
 	rm i2c
-	rm listener
 
-listener:
-	arm-linux-gnueabihf-gcc -std=c99 -D _POSIX_C_SOURCE=200809L commandListener.c -o listener -pthread
-	cp listener $(HOME)/cmpt433/public/myApps/
+sorter:
+	arm-linux-gnueabihf-gcc -g -Wall -Werror -std=c99 -D _POSIX_C_SOURCE=200809L main.c shutdownManager.c commandListener.c -o sorter -pthread
+	cp sorter $(HOME)/cmpt433/public/myApps/
+
+sorter-clean:
+	rm sorter
 

@@ -1,6 +1,8 @@
+#include <pthread.h>
 
 #include "commandListener.h"
-#include <pthread.h>
+#include "shutdownManager.h"
+
 
 int main() {
 
@@ -8,7 +10,7 @@ int main() {
     commandListener_init();
 
     // TODO wait until shutdown is triggered 
-
+    sm_waitForShutdownOnMainThread();
 
     // TODO call thread destructors
     commandListener_shutdown();

@@ -1,6 +1,7 @@
 #ifndef _COMMANDLISTENER_
 #define _COMMANDLISTENER_
 
-void commandListenerInit();
+void commandListener_init();
+void commandListener_shutdown();
 
 #endif

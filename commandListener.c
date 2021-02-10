@@ -25,7 +25,7 @@ static char *commands[2];
 static void socketInit();
 static void* listenerThread(void *arg);
 void detectCommands();
-void listenerShutdown();
+void commandListener_shutdown();
 
 
 void receiverInit() {
@@ -98,7 +98,7 @@ static void* listenerThread(void *arg) {
         // TODO CASE: user sent "stop", call shutdown
         if (strcmp("stop", commands[0]) == 0) {
             printf("Received command: shutdown\n");
-            listenerShutdown();
+            commandListener_shutdown();
         }
 
         // TODO CASE: user sent "count"/"get"/"length"/"array", retrieve info from array module
@@ -151,7 +151,7 @@ void detectCommands() {
     
 }
 
-void listenerShutdown() {
+void commandListener_shutdown() {
     pthread_cancel(threadPID);
     pthread_join(threadPID, NULL);
 

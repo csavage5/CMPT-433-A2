@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <time.h>
 
+
+int length = 100;
+int *array;
+
 int* createArray(int length) {
     // initialize randomizer
     time_t t;
@@ -49,13 +53,37 @@ void freeArray(int* array) {
     array = NULL;
 }
 
+int Sort_getSize() {
+    return length;
+}
+
+int* Sort_getArray() {
+    printArray(array, length);
+    return array;
+}
+
+int Sort_getValue(int value) {
+    if(value-1 < 0 || value > length) {
+        printf("Error! Value out of index.\n");
+    }
+    else{
+        printf("value: %d\n", array[value-1]);
+        return array[value-1];
+    }
+    return -1;
+}
 
 int main() {
-    int length = 100;
-    int *array;
     array = createArray(length);
     printArray(array, length);
     sort(array, length);
     printArray(array, length);
+    Sort_getArray();
+    Sort_getValue(1);
+    Sort_getValue(2);
+    Sort_getValue(3);
+    Sort_getValue(4);
+    Sort_getValue(101);
+    Sort_getValue(0);
     freeArray(array);
 }

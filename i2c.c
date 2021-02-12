@@ -60,46 +60,46 @@ static unsigned char readI2cReg(int i2cFileDesc, unsigned char regAddr) {
     return value;
 }
 
-void displayVal(int display) {
+void displayVal(char display) {
 
     int i2cFileDesc = initI2cBus(I2CDRV_LINUX_BUS1, I2C_DEVICE_ADDRESS);
-    if(display == 0){
+    if(display == '0'){
         writeI2cReg(i2cFileDesc, REG_OUTA, 0xa1);
         writeI2cReg(i2cFileDesc, REG_OUTB, 0x87);
     }
-    if(display == 1){
+    if(display == '1'){
         writeI2cReg(i2cFileDesc, REG_OUTA, 0x01);
         writeI2cReg(i2cFileDesc, REG_OUTB, 0x80);
     }
-    if(display == 2){
+    if(display == '2'){
         writeI2cReg(i2cFileDesc, REG_OUTA, 0x31);
         writeI2cReg(i2cFileDesc, REG_OUTB, 0x0e);
     }
-    if(display == 3){
+    if(display == '3'){
         writeI2cReg(i2cFileDesc, REG_OUTA, 0xb0);
         writeI2cReg(i2cFileDesc, REG_OUTB, 0x06);
     }
-    if(display == 4){
+    if(display == '4'){
         writeI2cReg(i2cFileDesc, REG_OUTA, 0x90);
         writeI2cReg(i2cFileDesc, REG_OUTB, 0x8a);
     }
-    if(display == 5){
+    if(display == '5'){
         writeI2cReg(i2cFileDesc, REG_OUTA, 0xb0);
         writeI2cReg(i2cFileDesc, REG_OUTB, 0x8c);
     }
-    if(display == 6){
+    if(display == '6'){
         writeI2cReg(i2cFileDesc, REG_OUTA, 0xb1);
         writeI2cReg(i2cFileDesc, REG_OUTB, 0x8c);
     }
-    if(display == 7){
+    if(display == '7'){
         writeI2cReg(i2cFileDesc, REG_OUTA, 0x04);
         writeI2cReg(i2cFileDesc, REG_OUTB, 0x14);
     }
-    if(display == 8){
+    if(display == '8'){
         writeI2cReg(i2cFileDesc, REG_OUTA, 0xb1);
         writeI2cReg(i2cFileDesc, REG_OUTB, 0x8f);
     }
-    if(display == 9){
+    if(display == '9'){
         writeI2cReg(i2cFileDesc, REG_OUTA, 0x90);
         writeI2cReg(i2cFileDesc, REG_OUTB, 0x8f);
     }
@@ -120,7 +120,16 @@ void toggleLED(int LED, int state){
     
 }
 
-void display2(int first, int second){
+void display2(int input){
+    char value[3];
+    if(input < 10) {
+        sprintf(value, "0%d", input);
+    }
+    else {
+        sprintf(value, "%d", input);
+    }
+    printf("Start of display2, first val: %c, second val: %c\n", value[0], value[1]);
+
     long seconds = 0;
     long nanoseconds = 5000000;
     struct timespec reqDelay = {seconds, nanoseconds};
@@ -129,13 +138,13 @@ void display2(int first, int second){
         // control first LED
         toggleLED(1, 1);
         toggleLED(2, 0);
-        displayVal(first);
+        displayVal(value[0]);
         nanosleep(&reqDelay, (struct timespec *) NULL);
 
         // Control second LED
         toggleLED(1, 0);
         toggleLED(2, 1);
-        displayVal(second);
+        displayVal(value[1]);
         nanosleep(&reqDelay, (struct timespec *) NULL);
     }
     
@@ -154,36 +163,8 @@ close(i2cFileDesc);
 long seconds = 0;
 long nanoseconds = 250000000;
 struct timespec reqDelay = {seconds, nanoseconds};
+display2(3);
 
-display2(1, 0);
-// toggleLED(1, 0);
-// toggleLED(2, 1);
-// nanosleep(&reqDelay, (struct timespec *) NULL);
-
-// displayVal(0);
-// nanosleep(&reqDelay, (struct timespec *) NULL);
-// displayVal(1);
-// nanosleep(&reqDelay, (struct timespec *) NULL);
-// displayVal(2);
-// nanosleep(&reqDelay, (struct timespec *) NULL);
-// displayVal(3);
-// nanosleep(&reqDelay, (struct timespec *) NULL);
-// displayVal(4);
-// nanosleep(&reqDelay, (struct timespec *) NULL);
-
-// toggleLED(1, 1);
-// toggleLED(2, 0);
-// nanosleep(&reqDelay, (struct timespec *) NULL);
-// displayVal(5);
-// nanosleep(&reqDelay, (struct timespec *) NULL);
-// displayVal(6);
-// nanosleep(&reqDelay, (struct timespec *) NULL);
-// displayVal(7);
-// nanosleep(&reqDelay, (struct timespec *) NULL);
-// displayVal(8);
-// nanosleep(&reqDelay, (struct timespec *) NULL);
-// displayVal(9);
-// nanosleep(&reqDelay, (struct timespec *) NULL);
 
 return 0;
 }

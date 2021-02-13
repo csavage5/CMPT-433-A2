@@ -6,7 +6,6 @@
 #include <pthread.h>
 #include <errno.h>
 
-
 #include "commandListener.h"
 #include "shutdownManager.h"
 

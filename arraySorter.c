@@ -13,6 +13,9 @@ static pthread_mutex_t mutLength = PTHREAD_MUTEX_INITIALIZER;
 int length = 100;
 int *array = NULL;
 
+static void* sorterThread(void *arg);
+static void* pipeThread(void *arg);
+
 static void createArray();
 static void printArray();
 static void sort();
@@ -22,15 +25,17 @@ static void shutdownPipeThread();
 static void shutdownSorterThread();
 
 
-/* Public Functions */
+
 
 // TODO take in pipes
 void arraySorter_init() {
     // start up threads
-    pthread_create(&threadPipePID, NULL, sorterThread, NULL);
+    pthread_create(&threadPipePID, NULL, pipeThread, NULL);
     pthread_create(&threadSorterPID, NULL, sorterThread, NULL);
 }
 
+
+/* Threads */
 
 /*
     Thread loop (pipe):
@@ -50,8 +55,7 @@ void arraySorter_init() {
             reset timer to 0
 */
 
-
-static void sorterThread() {
+static void* sorterThread(void *arg) {
     
     while (!sm_isShutdown()) {
         freeArray();
@@ -65,7 +69,7 @@ static void sorterThread() {
     shutdownSorterThread();
 }
 
-static void pipeThread() {
+static void* pipeThread(void *arg) {
     // TODO
 
     while (sm_isShutdown()) {
@@ -77,18 +81,22 @@ static void pipeThread() {
 }
 
 
+
+/* Public Helper Functions */
+
+
 static int arraySorter_getSize() {
     // TODO critical section locking
     
     return length;
 }
 
-static void arraySorter_getArray() {
+void arraySorter_getArray() {
     printArray();
     return array;
 }
 
-static int arraySorter_getValue(int value) {
+int arraySorter_getValue(int value) {
     if(value-1 < 0 || value > length) {
         printf("Error! Value out of index.\n");
     }
@@ -110,7 +118,7 @@ void arraySorter_shutdown() {
 }
 
 
-/* Helper Functions */
+/* Private Helper Functions */
 
 static void createArray() {
     // initialize randomizer

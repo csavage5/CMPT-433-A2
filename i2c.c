@@ -19,15 +19,14 @@
 #define I2CDRV_LINUX_BUS1 "/dev/i2c-1"
 #define I2CDRV_LINUX_BUS2 "/dev/i2c-2"
 
-static int initI2cBus(char* bus, int address)
-{
-int i2cFileDesc = open(bus, O_RDWR);
-int result = ioctl(i2cFileDesc, I2C_SLAVE, address);
-if (result < 0) {
-perror("I2C: Unable to set I2C device to slave address.");
-exit(1);
-}
-return i2cFileDesc;
+static int initI2cBus(char* bus, int address){
+    int i2cFileDesc = open(bus, O_RDWR);
+    int result = ioctl(i2cFileDesc, I2C_SLAVE, address);
+    if (result < 0) {
+        perror("I2C: Unable to set I2C device to slave address.");
+        exit(1);
+    }
+    return i2cFileDesc;
 }
 
 // Set value for a seg display LED
@@ -42,7 +41,7 @@ static void writeI2cReg(int i2cFileDesc, unsigned char regAddr, unsigned char va
     }
 }
 
-static unsigned char readI2cReg(int i2cFileDesc, unsigned char regAddr) {
+static unsigned char readI2cReg(int i2cFileDesc, unsigned char regAddr){
     // To read a register, must first write the address
     int res = write(i2cFileDesc, &regAddr, sizeof(regAddr));
     if (res != sizeof(regAddr)) {
@@ -60,7 +59,7 @@ static unsigned char readI2cReg(int i2cFileDesc, unsigned char regAddr) {
     return value;
 }
 
-void displayVal(char display) {
+void displayVal(char display){
 
     int i2cFileDesc = initI2cBus(I2CDRV_LINUX_BUS1, I2C_DEVICE_ADDRESS);
     if(display == '0'){
@@ -150,21 +149,21 @@ void display2(int input){
     
 }
 
-int main()
-{
-printf("Drive display (assumes GPIO #61 and #44 are output and 1)\n");
-int i2cFileDesc = initI2cBus(I2CDRV_LINUX_BUS1, I2C_DEVICE_ADDRESS);
-// Set display to output mode
-writeI2cReg(i2cFileDesc, REG_DIRA, 0x00);
-writeI2cReg(i2cFileDesc, REG_DIRB, 0x00);
-close(i2cFileDesc);
+void init() {
+    printf("Drive display (assumes GPIO #61 and #44 are output and 1)\n");
+    int i2cFileDesc = initI2cBus(I2CDRV_LINUX_BUS1, I2C_DEVICE_ADDRESS);
+    // Set display to output mode
+    writeI2cReg(i2cFileDesc, REG_DIRA, 0x00);
+    writeI2cReg(i2cFileDesc, REG_DIRB, 0x00);
+    close(i2cFileDesc);
+}
 
+int main() {
+    init();
 
-long seconds = 0;
-long nanoseconds = 250000000;
-struct timespec reqDelay = {seconds, nanoseconds};
-display2(3);
+    // read from pipe here
+    
+    display2(3);
 
-
-return 0;
+    return 0;
 }

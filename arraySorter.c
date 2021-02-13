@@ -67,6 +67,8 @@ static void* sorterThread(void *arg) {
     }
     
     shutdownSorterThread();
+
+    return NULL;
 }
 
 static void* pipeThread(void *arg) {
@@ -78,6 +80,8 @@ static void* pipeThread(void *arg) {
 
     shutdownPipeThread();
 
+    return NULL;
+
 }
 
 
@@ -85,13 +89,14 @@ static void* pipeThread(void *arg) {
 /* Public Helper Functions */
 
 
-static int arraySorter_getSize() {
+int arraySorter_getSize() {
     // TODO critical section locking
     
     return length;
 }
 
-void arraySorter_getArray() {
+int* arraySorter_getArray() {
+    //TODO refactor to send back string of array data
     printArray();
     return array;
 }
@@ -132,7 +137,6 @@ static void createArray() {
     for(int i = 0; i < length; i++){
         array[i] = rand() % length;
     }
-    return array;
 }
 
 static void printArray() {

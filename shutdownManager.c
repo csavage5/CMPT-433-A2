@@ -6,8 +6,9 @@
 static pthread_cond_t condReleaseMain = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t mutReleaseMain = PTHREAD_MUTEX_INITIALIZER;
 static int shutdownStatus = 0;
+
 // for reader-writer problem of checking for shutdown and starting shutdown
-// reader-writer solution (sm_isShutdown and sm_startShutdown) adapted from https://arxiv.org/pdf/1309.4507.pdf
+// reader-writer problem solution (sm_isShutdown and sm_startShutdown) adapted from https://arxiv.org/pdf/1309.4507.pdf (#3)
 int numReaders = 0;
 static pthread_mutex_t mutReaderIn;
 static pthread_mutex_t mutReaderOut;
@@ -49,13 +50,17 @@ int sm_isShutdown() {
 }
 
 void sm_startShutdown() {
-    // TODO release main thread from waiting
+    // release main thread from waiting
     pthread_cond_signal(&condReleaseMain);
 
     // update value of shutdownStatus boolean
-    pthread_mutex_lock(&mutReaderIn);   // prevent new readers from entering critical section
+
+    // prevent new readers from entering critical section
+    pthread_mutex_lock(&mutReaderIn);   
     {
-        pthread_mutex_lock(&mutReaderOut);  // lock for access to numReaders, writerRequest
+        // lock for access to numReaders, writerRequest, 
+        // prevent premature signal of condWriterAccess
+        pthread_mutex_lock(&mutReaderOut);  
 
         if (numReaders == 0) {
             // CASE: no active readers - can safely release mutReaderOut
@@ -73,8 +78,8 @@ void sm_startShutdown() {
             }
             pthread_mutex_unlock(&mutWriterAccess); 
 
-            // CASE: all readers are out of critical section(s), and no more can enter - 
-            //       withdraw request 
+            // all readers are out of critical section(s), and no 
+            // more can enter - withdraw request 
             writerRequest = 0;
         }
 

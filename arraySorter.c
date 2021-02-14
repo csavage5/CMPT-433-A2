@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 #include "shutdownManager.h"
 
@@ -23,8 +24,6 @@ static void freeArray();
 
 static void shutdownPipeThread();
 static void shutdownSorterThread();
-
-
 
 
 // TODO take in pipes

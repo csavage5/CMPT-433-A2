@@ -6,8 +6,10 @@
 #include <pthread.h>
 #include <errno.h>
 
+
 #include "commandListener.h"
 #include "shutdownManager.h"
+#include "arraySorter.h"
 
 #define MAX_LEN 1500  // 1500 bytes max in UDP packet
 #define PORT 12345
@@ -94,17 +96,38 @@ static void* listenerThread(void *arg) {
         detectCommands();
         printf("0: %s, 1: %s\n", commands[0], commands[1]);
 
-        // TODO CASE: user sent "stop", call shutdown
         if (strcmp("stop", commands[0]) == 0) {
+            // CASE: user sent "stop", call shutdown
             printf("Received command: shutdown\n");
             sm_startShutdown();
             commandListener_shutdown();
+        } else if (strcmp("length", commands[0]) == 0) {
+            // CASE: user sent "count"
+            sprintf(pMessage, "%d", arraySorter_getSize());
+        } else if ( strcmp("get", commands[0]) == 0) {
+            // CASE: user sent "get"
+            int userInput = atoi(commands[1]);
+
+            if ( userInput > 0 ) {
+                // CASE: user sent valid number
+                if (userInput <= arraySorter_getSize()) {
+                    // CASE: number is within array range
+                    sprintf(pMessage, "%d", arraySorter_getValue(userInput));
+                } else {
+                    // CASE: number is beyond array range
+                    strcpy(pMessage, "Error: value is beyond array range");
+                }
+            } else {
+                // CASE: user sent a number <= 0 or an alphanumeric character
+                strcpy(pMessage, "Error: invalid value parameter");
+            }
+            
         }
 
-        // TODO CASE: user sent "count"/"get"/"length"/"array", retrieve info from array module
-
-        // TODO CASE: user sent "help", send help string
+        // TODO CASE: user sent "count"/"array", retrieve info from array module
+        
         else if (strcmp("help", commands[0]) == 0) {
+            // TODO CASE: user sent "help", send help string
             printf("Received command: help\n");
             strcpy(pMessage, "Commands: help, get, ...\n");
         }

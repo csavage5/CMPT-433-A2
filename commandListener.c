@@ -97,22 +97,22 @@ static void* listenerThread(void *arg) {
         printf("0: %s, 1: %s\n", commands[0], commands[1]);
 
         if (strcmp("stop", commands[0]) == 0) {
-            // CASE: user sent "stop", call shutdown
+            // CASE: user sent "stop" - call shutdown
             printf("Received command: shutdown\n");
             sm_startShutdown();
             commandListener_shutdown();
         } else if (strcmp("length", commands[0]) == 0) {
-            // CASE: user sent "count"
-            sprintf(pMessage, "%d", arraySorter_getSize());
+            // CASE: user sent "length" - get length of current array being sorted
+            sprintf(pMessage, "%d\n", arraySorter_getSize());
         } else if ( strcmp("get", commands[0]) == 0) {
-            // CASE: user sent "get"
+            // CASE: user sent "get" - check if index is within range
             int userInput = atoi(commands[1]);
 
             if ( userInput > 0 ) {
                 // CASE: user sent valid number
                 if (userInput <= arraySorter_getSize()) {
                     // CASE: number is within array range
-                    sprintf(pMessage, "%d", arraySorter_getValue(userInput));
+                    sprintf(pMessage, "%d\n", arraySorter_getValue(userInput));
                 } else {
                     // CASE: number is beyond array range
                     strcpy(pMessage, "Error: value is beyond array range");

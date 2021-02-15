@@ -115,11 +115,11 @@ static void* listenerThread(void *arg) {
                     sprintf(pMessage, "%d\n", arraySorter_getValue(userInput));
                 } else {
                     // CASE: number is beyond array range
-                    strcpy(pMessage, "Error: value is beyond array range");
+                    strcpy(pMessage, "Error: value is beyond array range\n");
                 }
             } else {
                 // CASE: user sent a number <= 0 or an alphanumeric character
-                strcpy(pMessage, "Error: invalid value parameter");
+                strcpy(pMessage, "Error: invalid value parameter\n");
             }
             
         }

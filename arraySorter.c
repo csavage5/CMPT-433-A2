@@ -9,7 +9,7 @@
 static pthread_t threadPipePID;
 static pthread_t threadSorterPID;
 
-static pthread_mutex_t mutLength = PTHREAD_MUTEX_INITIALIZER;
+//static pthread_mutex_t mutLength = PTHREAD_MUTEX_INITIALIZER;
 
 int length = 100;
 int *array = NULL;
@@ -72,9 +72,9 @@ static void* sorterThread(void *arg) {
 
 static void* pipeThread(void *arg) {
     // TODO
-
-    while (sm_isShutdown()) {
-
+    int temp; // to keep busy loop busy
+    while (sm_isShutdown()) {   
+        temp += 1;
     }
 
     shutdownPipeThread();
@@ -118,7 +118,7 @@ void arraySorter_shutdown() {
 
     // free heap memory
     freeArray();
-    printf("Module [commandListener] shutting down...\n");
+    printf("Module [arraySorter] shutting down...\n");
 }
 
 
@@ -170,10 +170,10 @@ static void freeArray() {
     array = NULL;
 }
 
-static void updateLength(int newLength) {
-    //TODO critical section locking
-    length = newLength;
-}
+// static void updateLength(int newLength) {
+//     //TODO critical section locking
+//     length = newLength;
+// }
 
 static void shutdownPipeThread() {
     pthread_cancel(threadPipePID);

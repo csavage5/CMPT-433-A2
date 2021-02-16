@@ -8,11 +8,13 @@
 
 static pthread_t threadPipePID;
 static pthread_t threadSorterPID;
+static pthread_mutex_t *pArrayLengthMutex;
 
 //static pthread_mutex_t mutLength = PTHREAD_MUTEX_INITIALIZER;
 
 int length = 100;
 int *array = NULL;
+FILE *fptr;
 
 static void* sorterThread(void *arg);
 static void* pipeThread(void *arg);
@@ -27,10 +29,12 @@ static void shutdownSorterThread();
 
 
 // TODO take in pipes
-void arraySorter_init() {
+void arraySorter_init(pthread_mutex_t *ArrayLengthMutex) {
+    pArrayLengthMutex = ArrayLengthMutex;
     // start up threads
     pthread_create(&threadPipePID, NULL, pipeThread, NULL);
     pthread_create(&threadSorterPID, NULL, sorterThread, NULL);
+    printf("initialzed array sorter\n");
 }
 
 
@@ -55,7 +59,7 @@ void arraySorter_init() {
 */
 
 static void* sorterThread(void *arg) {
-    
+    printf("starting to sort shit\n");
     while (!sm_isShutdown()) {
         freeArray();
         createArray();
@@ -73,8 +77,29 @@ static void* sorterThread(void *arg) {
 static void* pipeThread(void *arg) {
     // TODO
     int temp; // to keep busy loop busy
-    while (sm_isShutdown()) {   
+    printf("piping\n");
+    int current = 0;
+    while (!sm_isShutdown()) {   
+        // READ FROM PIPE HERE
+        // update length function if recevied value is different from current
+        // printf("in da loop\n");
+        
+        char newVal[10];
+        int n = 10;
+        
+        // START OF CRITICAL SECTION
+        pthread_mutex_lock(pArrayLengthMutex);
+        fptr = fopen("lengthFile.txt", "r");
+        fgets(newVal, n, fptr);
+        fclose(fptr);
+        if(current != atoi(newVal)){
+            printf("new array length: %s\n", newVal);
+            current = atoi(newVal);
+        }
+        pthread_mutex_unlock(pArrayLengthMutex);
+        // END OF CRITICAL SECTION
         temp += 1;
+        
     }
 
     shutdownPipeThread();

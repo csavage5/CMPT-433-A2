@@ -13,7 +13,7 @@ clean:
 	rm i2c
 
 sorter:
-	arm-linux-gnueabihf-gcc -g -Wall -Werror -std=c99 -D _POSIX_C_SOURCE=200809L main.c shutdownManager.c commandListener.c arraySorter.c -o sorter -pthread
+	arm-linux-gnueabihf-gcc -g -Wall -Werror -std=c99 -D _POSIX_C_SOURCE=200809L main.c shutdownManager.c commandListener.c arraySorter.c displayDriver.c -o sorter -pthread
 	cp sorter $(HOME)/cmpt433/public/myApps/
 
 sorter-clean:

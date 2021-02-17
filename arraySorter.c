@@ -8,11 +8,15 @@
 
 static pthread_t threadPipePID;
 static pthread_t threadSorterPID;
-static pthread_mutex_t ArrayLengthMutex;
+
+static pthread_mutex_t mutMostRecentLength = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mutCurrentArrayLength = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mutArray = PTHREAD_MUTEX_INITIALIZER;
 
 //static pthread_mutex_t mutLength = PTHREAD_MUTEX_INITIALIZER;
 
-int length = 100;
+int mostRecentLength = 100; // most recent length received from potentiometer
+int currentArrayLength = 0; // length of current array being sorted
 int current = 0;
 int *array = NULL;
 FILE *fptr;
@@ -24,8 +28,10 @@ static void createArray();
 static void printArray();
 static void sort();
 static void freeArray();
-static void updateLength(int newLength);
-static int readLength();
+
+static void updateMostRecentLength(int newLength);
+static int getMostRecentLength();
+static int getLengthForNewArray();
 
 static void shutdownPipeThread();
 static void shutdownSorterThread();
@@ -52,11 +58,11 @@ void arraySorter_init(int *pipeToRead) {
 /*
     Thread loop (pipe):
         wait for incoming pipe data
-        if new data different from old data, lock & overwrite length
+        if new data different from old data, lock & overwrite mostRecentLength
 
     Thread loop (sorter):
         free array
-        create array with current value of length
+        create array with current value of mostRecentLength
         sort array
 
         if timer <= 1 second:
@@ -69,20 +75,22 @@ void arraySorter_init(int *pipeToRead) {
 
 static void* sorterThread(void *arg) {
     printf("starting to sort shit\n");
+
+    int localLength = 0;
+
     while (!sm_isShutdown()) {
         freeArray();
-        pthread_mutex_lock(&ArrayLengthMutex);
-        int tempLength = readLength();
-        pthread_mutex_unlock(&ArrayLengthMutex);
-        // End of CS
-        createArray(tempLength);
-        sort(tempLength);
 
+        // get length for array
+        localLength = getLengthForNewArray();
+        
+        createArray(localLength);
+        sort(localLength);
 
         //TODO counter
     }
     
-    //shutdownSorterThread();
+    shutdownSorterThread();
 
     return NULL;
 }
@@ -99,12 +107,12 @@ static void* pipeThread(void *arg) {
 
         read(pipeFromPot, buffer, sizeof(buffer));
         printf("arraySorter read \"%s\" from incoming pipe\n", buffer);
-        pthread_mutex_lock(&ArrayLengthMutex);
-        updateLength(atoi(buffer));
-        pthread_mutex_unlock(&ArrayLengthMutex);
+
+        updateMostRecentLength(atoi(buffer));
+ 
     }
 
-    //shutdownPipeThread();
+    shutdownPipeThread();
 
     return NULL;
 
@@ -114,21 +122,46 @@ static void* pipeThread(void *arg) {
 
 /* Public Helper Functions */
 
-
+// Get length of the array being sorted
 int arraySorter_getSize() {
-    // TODO critical section locking
-    
-    return length;
+    int current = 0;
+
+    // save new value into CurrentArrayLength
+    pthread_mutex_lock(&mutCurrentArrayLength);
+    current = currentArrayLength;
+    pthread_mutex_unlock(&mutCurrentArrayLength);
+
+    return current;
 }
 
-int* arraySorter_getArray() {
-    //TODO refactor to send back string of array data
-    printArray();
-    return array;
+// Write the current array into the given buffer
+void arraySorter_getArray(char *buffer) {
+    int length = arraySorter_getSize();
+
+    //TODO lock array, iterate through
+    pthread_mutex_lock(&mutArray);
+
+    for(int i = 0; i < length; i++) {
+        
+        if (i == length - 1) {
+            // CASE: last element in array
+            sprintf(buffer, "%d\n", array[i]);
+        } else if ( (i+1) % 10 != 0 ) {
+            // CASE: element not last on line
+            sprintf(buffer, "%d, ", array[i]);
+        } else {
+            // CASE: element last on line
+            sprintf(buffer, "%d,\n", array[i]);
+        }
+            
+    }
+
+    pthread_mutex_unlock(&mutArray);
+
 }
 
 int arraySorter_getValue(int value) {
-    if(value-1 < 0 || value > length) {
+    if(value-1 < 0 || value > mostRecentLength) {
         printf("Error! Value out of index.\n");
     }
     else{
@@ -151,43 +184,59 @@ void arraySorter_shutdown() {
 
 /* Private Helper Functions */
 
-static void createArray(int tempLength) {
+static void createArray(int length) {
     // initialize randomizer
     time_t t;
     srand((unsigned) time(&t));
 
+    pthread_mutex_lock(&mutArray);
+
     // malloc space for array
-    array = malloc(tempLength * sizeof(int));
+    array = malloc(length * sizeof(int));
 
     // fill array with random integers from 0 to length
-    for(int i = 0; i < tempLength; i++){
-        array[i] = rand() % tempLength;
+    for(int i = 0; i < length; i++){
+        array[i] = rand() % length;
     }
+
+    pthread_mutex_unlock(&mutArray);
 }
 
-static void printArray() {
-    for(int i = 0; i < length; i++) {
-        if(i != length-1){
-            printf("%d, ", array[i]);
-        }
-        else{
-            printf("%d\n", array[i]);
-        }
-    }
-}
+// static void printArray(int length) {
+//     for(int i = 0; i < length; i++) {
+        
+//         pthread_mutex_lock(&mutArray);
+        
+//         if(i != length-1){
+//             printf("%d, ", array[i]);
+//         }
+//         else{
+//             printf("%d\n", array[i]);
+//         }
 
-static void sort(int tempLength) {
+//         pthread_mutex_lock(&mutArray);
+
+//     }
+// }
+
+static void sort(int length) {
     int placeholder;
     int swapped = 1;
     while(swapped == 1){
         swapped = 0;
-        for(int i = 0; i < tempLength-1; i++) {
+        for(int i = 0; i < length-1; i++) {
+            
+            pthread_mutex_lock(&mutArray);
+
             if(array[i] > array[i+1]) {
                 placeholder = array[i];
                 array[i] = array[i+1];
                 array[i+1] = placeholder;
                 swapped = 1;
             }
+
+            pthread_mutex_unlock(&mutArray);
+
         }
     }
 }
@@ -197,13 +246,41 @@ static void freeArray() {
     array = NULL;
 }
 
-static void updateLength(int newLength) {
+// save new value from the potentiometer
+static void updateMostRecentLength(int newLength) {
     //TODO critical section locking
-    length = newLength;
+
+     pthread_mutex_lock(&mutMostRecentLength);
+     mostRecentLength = newLength;    
+     pthread_mutex_unlock(&mutMostRecentLength);
+   
 }
 
-static int readLength() {
-    return length;
+// Get the most recent value from the potentiometer
+static int getMostRecentLength() {
+    // TODO critical section locking
+    int temp;
+    pthread_mutex_lock(&mutMostRecentLength);
+    {
+        temp = mostRecentLength; 
+    }
+    pthread_mutex_unlock(&mutMostRecentLength);
+   
+    return temp;
+}
+
+// Get the most recent value from the potentiometer and save it to CurrentArrayLength
+static int getLengthForNewArray() {
+    int current = getMostRecentLength();
+
+    // save new value into CurrentArrayLength
+    pthread_mutex_lock(&mutCurrentArrayLength);
+    {
+        currentArrayLength = current;
+    }
+    pthread_mutex_unlock(&mutCurrentArrayLength);
+
+    return current;
 }
 
 static void shutdownPipeThread() {

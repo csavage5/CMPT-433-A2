@@ -29,7 +29,7 @@ static char value[3];
 static pthread_t threadPipePID;
 static pthread_t threadDisplayPID;
 
-static pthread_mutex_t mutDisplayValue;
+static pthread_mutex_t mutDisplayValue = PTHREAD_MUTEX_INITIALIZER;
 
 static void* displayThread(void *arg);
 static void* pipeThread(void *arg);

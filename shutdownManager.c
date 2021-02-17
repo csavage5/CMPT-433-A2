@@ -10,8 +10,8 @@ static int shutdownStatus = 0;
 // for reader-writer problem of checking for shutdown and starting shutdown
 // reader-writer problem solution (sm_isShutdown and sm_startShutdown) adapted from https://arxiv.org/pdf/1309.4507.pdf (#3)
 int numReaders = 0;
-static pthread_mutex_t mutReaderIn;
-static pthread_mutex_t mutReaderOut;
+static pthread_mutex_t mutReaderIn = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mutReaderOut = PTHREAD_MUTEX_INITIALIZER;
 
 int writerRequest = 0;
 static pthread_cond_t condWriterAccess = PTHREAD_COND_INITIALIZER;

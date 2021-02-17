@@ -46,6 +46,8 @@ void displayDriver_init() {
     // start up threads
     pthread_create(&threadPipePID, NULL, pipeThread, NULL);
     pthread_create(&threadDisplayPID, NULL, displayThread, NULL);
+    printf("Module [displayDriver] initialized\n");
+
 }
 
 void displayDriver_shutdown() {

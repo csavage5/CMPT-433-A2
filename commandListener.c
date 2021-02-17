@@ -33,6 +33,7 @@ void commandListener_init() {
 
     //TODO start thread
     pthread_create(&threadPID, NULL, listenerThread, NULL);
+    printf("Module [commandListener] initialized\n");
 
 }
 

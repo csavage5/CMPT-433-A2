@@ -2,13 +2,13 @@
 #include <stdlib.h>
 #include <time.h>
 #include <pthread.h>
-#include <semaphore.h>
+#include <unistd.h>
 
 #include "shutdownManager.h"
 
 static pthread_t threadPipePID;
 static pthread_t threadSorterPID;
-static pthread_mutex_t *pArrayLengthMutex;
+//static pthread_mutex_t *pArrayLengthMutex;
 
 //static pthread_mutex_t mutLength = PTHREAD_MUTEX_INITIALIZER;
 
@@ -28,14 +28,20 @@ static void freeArray();
 static void shutdownPipeThread();
 static void shutdownSorterThread();
 
+static int pipeFromPot;
+//static FILE *pipeToDisplayDriver;
 
 // TODO take in pipes
-void arraySorter_init(pthread_mutex_t *ArrayLengthMutex) {
-    pArrayLengthMutex = ArrayLengthMutex;
+void arraySorter_init(int *pipeToRead) {
+    //pArrayLengthMutex = ArrayLengthMutex;
+
+    // save pipe info
+    pipeFromPot = pipeToRead[0];
+    
     // start up threads
     pthread_create(&threadPipePID, NULL, pipeThread, NULL);
     pthread_create(&threadSorterPID, NULL, sorterThread, NULL);
-    printf("initialzed array sorter\n");
+    printf("Module [arraySorter] initialized\n");
 }
 
 
@@ -70,38 +76,50 @@ static void* sorterThread(void *arg) {
         //TODO counter
     }
     
-    shutdownSorterThread();
+    //shutdownSorterThread();
 
     return NULL;
 }
 
 static void* pipeThread(void *arg) {
     // TODO
-    int temp; // to keep busy loop busy
+    //int temp; // to keep busy loop busy
     printf("piping\n");
+    char buffer[1024];
+
     while (!sm_isShutdown()) {   
         // READ FROM PIPE HERE
+        //fptr = fdopen(pipeFromPot, "r");
+
+        read(pipeFromPot, buffer, sizeof(buffer));
+        printf("arraySorter read \"%s\" from incoming pipe\n", buffer);
+
+        // while (!feof(fptr) && !ferror(fptr) && fgets(buffer, sizeof(buffer), fptr) != NULL) {
+        //     printf("arraySorter read \"%s\" from incoming pipe\n", buffer);
+        // }
+        //close(pipeFromPot);
+
         // update length function if recevied value is different from current
         // printf("in da loop\n");
         
-        char newVal[10];
-        int n = 10;
+        // char newVal[10];
+        // int n = 10;
         
         // START OF CRITICAL SECTION
-        pthread_mutex_lock(pArrayLengthMutex);
-        fptr = fopen("lengthFile.txt", "r");
-        fgets(newVal, n, fptr);
-        fclose(fptr);
-        if(current != atoi(newVal)){
-            printf("new array length: %s\n", newVal);
-            current = atoi(newVal);
-        }
-        pthread_mutex_unlock(pArrayLengthMutex);
+        // pthread_mutex_lock(pArrayLengthMutex);
+        // fptr = fopen("lengthFile.txt", "r");
+        // fgets(newVal, n, fptr);
+        // fclose(fptr);
+        // if(current != atoi(newVal)){
+        //     printf("new array length: %s\n", newVal);
+        //     current = atoi(newVal);
+        // }
+        // pthread_mutex_unlock(pArrayLengthMutex);
         // END OF CRITICAL SECTION
-        temp += 1;
+        //temp += 1;
     }
 
-    shutdownPipeThread();
+    //shutdownPipeThread();
 
     return NULL;
 

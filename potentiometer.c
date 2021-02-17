@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <time.h>
+#include <string.h>
 
 #include "shutdownManager.h"
 
@@ -13,23 +14,34 @@
 #define A2D_MAX_READING 4095
 
 static pthread_t threadPipePID;
-static pthread_mutex_t *pArrayLengthMutex;
+// static pthread_mutex_t *pArrayLengthMutex;
 
 float arrLengthFloat = 0;
 int arrLength = 0;
+
+char *buffer;
 FILE *fptr;
 
 static int getVoltage0Reading();
 static void* potentiometer_getLength(void *arg);
 static void potentiometer_sendData();
 
+int pipeToArraySorter;
+
+
 // static void shutdownPipeThread();
 
 
 // Start up thread
-void potentiometer_init(pthread_mutex_t *ArrayLengthMutex) {
-    pArrayLengthMutex = ArrayLengthMutex;
+void potentiometer_init(int *pipeToWrite) {
+    //pArrayLengthMutex = ArrayLengthMutex;
+    
+    // save pipe details
+    //pipeToArraySorter = fdopen(pipeToWrite[1], "w");
+    pipeToArraySorter = pipeToWrite[1];
+
     pthread_create(&threadPipePID, NULL, potentiometer_getLength, NULL);
+    printf("Module [Potentionmeter] initialized\n");
 }
 
 // Read data from potentiometer on BBG
@@ -79,10 +91,11 @@ static void* potentiometer_getLength(void *arg) {
 
         if(current != arrLength){
             current = arrLength;
+            //arrLength = current;
             // START OF CRITICAL SECTION
-            pthread_mutex_lock(pArrayLengthMutex);
+            //pthread_mutex_lock(pArrayLengthMutex);
             potentiometer_sendData();
-            pthread_mutex_unlock(pArrayLengthMutex);
+            //pthread_mutex_unlock(pArrayLengthMutex);
             // END OF CRITICAL SECTION
         }
         long seconds = 1;
@@ -95,11 +108,23 @@ static void* potentiometer_getLength(void *arg) {
 }
 
 static void potentiometer_sendData() {
-    fptr = fopen("lengthFile.txt", "w");
-    fprintf(fptr, "%d", arrLength);
-    fclose(fptr);
+    fptr = fdopen(pipeToArraySorter, "w");
+    
+    buffer = (char *)malloc(5 * sizeof(char));
+    memset(buffer, '\0', sizeof(*buffer));
+    sprintf(buffer, "%d", arrLength);
+    //snprintf(buffer, strlen(buffer), )
 
-    printf("wrote value: %d\n", arrLength);
+    write(pipeToArraySorter, buffer, sizeof(buffer));
+    
+    // fprintf(fptr, "%d", arrLength);
+    // fflush(fptr);
+    // close(pipeToArraySorter);
+
+    printf("Potentiometer wrote value \"%d\" to pipe\n", buffer);
+
+    free(buffer);
+    buffer = NULL;
 }
 
 // static void shutdownPipeThread() {

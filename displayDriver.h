@@ -2,6 +2,6 @@
 #define _DISPLAYDRIVER_
 
 void displayDriver_init() {
-void commandListener_shutdown();
+void displayDriver_shutdown();
 
 #endif

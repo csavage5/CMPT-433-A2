@@ -41,11 +41,11 @@ void potentiometer_init(int *pipeToWrite) {
     pipeToArraySorter = pipeToWrite[1];
 
     pthread_create(&threadPipePID, NULL, potentiometer_getLength, NULL);
-    printf("Module [Potentionmeter] initialized\n");
+    printf("Module [potentiometerReader] initialized\n");
 }
 
 // Read data from potentiometer on BBG
-int getVoltage0Reading() {
+static int getVoltage0Reading() {
     // Open file
     FILE *f = fopen(A2D_FILE_VOLTAGE0, "r");
     if (!f) {
@@ -68,6 +68,8 @@ int getVoltage0Reading() {
 
 // Change reading from potentiometer to array length
 static void* potentiometer_getLength(void *arg) {
+    buffer = (char *)malloc(5 * sizeof(char));
+
     int current = 0;
     int arrayBounds[10] = {0,500,1000,1500,2000,2500,3000,3500,4000,4100};
     int arraySizes[10] = {1,20,60,120,250,300,500,800,1200,2100};
@@ -110,7 +112,6 @@ static void* potentiometer_getLength(void *arg) {
 static void potentiometer_sendData() {
     fptr = fdopen(pipeToArraySorter, "w");
     
-    buffer = (char *)malloc(5 * sizeof(char));
     memset(buffer, '\0', sizeof(*buffer));
     sprintf(buffer, "%d", arrLength);
     //snprintf(buffer, strlen(buffer), )
@@ -121,14 +122,18 @@ static void potentiometer_sendData() {
     // fflush(fptr);
     // close(pipeToArraySorter);
 
-    printf("Potentiometer wrote value \"%d\" to pipe\n", buffer);
+    printf("Potentiometer wrote value \"%s\" to pipe\n", buffer);
 
-    free(buffer);
-    buffer = NULL;
+
 }
 
-// static void shutdownPipeThread() {
-//     printf("shutting down potentiometer pipe thread\n");
-//     pthread_cancel(threadPipePID);
-//     pthread_join(threadPipePID, NULL);
-// }
+void potentiometer_shutdown() {
+    pthread_cancel(threadPipePID);
+    pthread_join(threadPipePID, NULL);
+
+    // free heap memory
+    free(buffer);
+    buffer = NULL;
+
+    printf("Module [potentiometerReader] shutting down...\n");
+}

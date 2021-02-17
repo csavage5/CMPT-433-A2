@@ -25,6 +25,7 @@ int main() {
     // TODO call thread destructors
     commandListener_shutdown();
     arraySorter_shutdown();
+    potentiometer_shutdown();
 
 
     return 0;

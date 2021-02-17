@@ -5,8 +5,4 @@ void potentiometer_init();
 void potentiometer_shutdown();
 
 
-int getVoltage0Reading();
-int potentiometer_getLength();
-
-
 #endif

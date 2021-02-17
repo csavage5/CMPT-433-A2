@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <time.h>
 
 #include "shutdownManager.h"
 
@@ -14,6 +15,7 @@
 static pthread_t threadPipePID;
 static pthread_mutex_t *pArrayLengthMutex;
 
+float arrLengthFloat = 0;
 int arrLength = 0;
 FILE *fptr;
 
@@ -55,50 +57,26 @@ int getVoltage0Reading() {
 // Change reading from potentiometer to array length
 static void* potentiometer_getLength(void *arg) {
     int current = 0;
+    int arrayBounds[10] = {0,500,1000,1500,2000,2500,3000,3500,4000,4100};
+    int arraySizes[10] = {1,20,60,120,250,300,500,800,1200,2100};
     while (true) {
         int reading = getVoltage0Reading();
+        int i = 0;
+        while(reading >= arrayBounds[i]){
+            i++;
+        }
+        // Calculate array size
+        int s = reading;
+        int a = arrayBounds[i-1];
+        int b = arrayBounds[i];
+        int n = arraySizes[i-1];
+        int m = arraySizes[i];
+        double val1 = s-a;
+        double val2 = b-a;
+        arrLengthFloat = (((val1) / (val2)) * (m-n) + n);
+        arrLength = arrLengthFloat;
+        // printf("arrLengthfloat: %f, arrLength: %d\n", arrLengthFloat, arrLength);
 
-        // prints to be removed later, just for testing
-        if(reading < 500){
-            // printf("Array will be of size: 1\n");
-            arrLength = 1;
-        }
-        if(reading > 500 && reading < 1000){
-            // printf("Array will be of size: 20\n");
-            arrLength = 20;
-        }
-        if(reading > 1000 && reading < 1500){
-            // printf("Array will be of size: 60\n");
-            arrLength = 60;
-        }
-        if(reading > 1500 && reading < 2000){
-            // printf("Array will be of size: 120\n");
-            arrLength = 120;
-        }
-        if(reading > 2000 && reading < 2500){
-            // printf("Array will be of size: 250\n");
-            arrLength = 250;
-        }
-        if(reading > 2500 && reading < 3000){
-            // printf("Array will be of size: 300\n");
-            arrLength = 300;
-        }
-        if(reading > 3000 && reading < 3500){
-            // printf("Array will be of size: 500\n");
-            arrLength = 500;
-        }
-        if(reading > 3500 && reading < 4000){
-            // printf("Array will be of size: 800\n");
-            arrLength = 800;
-        }
-        if(reading > 4000 && reading < 4100){
-            // printf("Array will be of size: 1200\n");
-            arrLength = 1200;
-        }
-        if(reading == 4100){
-            // printf("Array will be of size: 2100\n");
-            arrLength = 2100;
-        }
         if(current != arrLength){
             current = arrLength;
             // START OF CRITICAL SECTION
@@ -107,7 +85,10 @@ static void* potentiometer_getLength(void *arg) {
             pthread_mutex_unlock(pArrayLengthMutex);
             // END OF CRITICAL SECTION
         }
-        
+        long seconds = 1;
+        long nanoseconds = 0;
+        struct timespec reqDelay = {seconds, nanoseconds};
+        nanosleep(&reqDelay, (struct timespec *) NULL);
     }
     
     return NULL;

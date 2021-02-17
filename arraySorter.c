@@ -13,6 +13,7 @@ static pthread_mutex_t *pArrayLengthMutex;
 //static pthread_mutex_t mutLength = PTHREAD_MUTEX_INITIALIZER;
 
 int length = 100;
+int current = 0;
 int *array = NULL;
 FILE *fptr;
 
@@ -78,7 +79,6 @@ static void* pipeThread(void *arg) {
     // TODO
     int temp; // to keep busy loop busy
     printf("piping\n");
-    int current = 0;
     while (!sm_isShutdown()) {   
         // READ FROM PIPE HERE
         // update length function if recevied value is different from current
@@ -99,7 +99,6 @@ static void* pipeThread(void *arg) {
         pthread_mutex_unlock(pArrayLengthMutex);
         // END OF CRITICAL SECTION
         temp += 1;
-        
     }
 
     shutdownPipeThread();
@@ -153,6 +152,10 @@ static void createArray() {
     // initialize randomizer
     time_t t;
     srand((unsigned) time(&t));
+
+    if (current != length) {
+        length = current;
+    }
 
     // malloc space for array
     array = malloc(length * sizeof(int));

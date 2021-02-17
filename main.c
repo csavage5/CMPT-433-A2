@@ -6,7 +6,6 @@
 #include "arraySorter.h"
 #include "potentiometer.h"
 
-//static pthread_mutex_t ArrayLengthMutex;
 
 int main() {
 

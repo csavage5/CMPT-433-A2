@@ -14,7 +14,6 @@
 #define A2D_MAX_READING 4095
 
 static pthread_t threadPipePID;
-// static pthread_mutex_t *pArrayLengthMutex;
 
 float arrLengthFloat = 0;
 int arrLength = 0;
@@ -34,7 +33,6 @@ int pipeToArraySorter;
 
 // Start up thread
 void potentiometer_init(int *pipeToWrite) {
-    //pArrayLengthMutex = ArrayLengthMutex;
     
     // save pipe details
     //pipeToArraySorter = fdopen(pipeToWrite[1], "w");
@@ -94,11 +92,7 @@ static void* potentiometer_getLength(void *arg) {
         if(current != arrLength){
             current = arrLength;
             //arrLength = current;
-            // START OF CRITICAL SECTION
-            //pthread_mutex_lock(pArrayLengthMutex);
             potentiometer_sendData();
-            //pthread_mutex_unlock(pArrayLengthMutex);
-            // END OF CRITICAL SECTION
         }
         long seconds = 1;
         long nanoseconds = 0;

@@ -8,7 +8,7 @@
 
 static pthread_t threadPipePID;
 static pthread_t threadSorterPID;
-//static pthread_mutex_t *pArrayLengthMutex;
+static pthread_mutex_t ArrayLengthMutex;
 
 //static pthread_mutex_t mutLength = PTHREAD_MUTEX_INITIALIZER;
 
@@ -24,6 +24,8 @@ static void createArray();
 static void printArray();
 static void sort();
 static void freeArray();
+static void updateLength(int newLength);
+static int readLength();
 
 static void shutdownPipeThread();
 static void shutdownSorterThread();
@@ -69,8 +71,12 @@ static void* sorterThread(void *arg) {
     printf("starting to sort shit\n");
     while (!sm_isShutdown()) {
         freeArray();
-        createArray();
-        sort();
+        pthread_mutex_lock(&ArrayLengthMutex);
+        int tempLength = readLength();
+        pthread_mutex_unlock(&ArrayLengthMutex);
+        // End of CS
+        createArray(tempLength);
+        sort(tempLength);
 
 
         //TODO counter
@@ -93,30 +99,9 @@ static void* pipeThread(void *arg) {
 
         read(pipeFromPot, buffer, sizeof(buffer));
         printf("arraySorter read \"%s\" from incoming pipe\n", buffer);
-
-        // while (!feof(fptr) && !ferror(fptr) && fgets(buffer, sizeof(buffer), fptr) != NULL) {
-        //     printf("arraySorter read \"%s\" from incoming pipe\n", buffer);
-        // }
-        //close(pipeFromPot);
-
-        // update length function if recevied value is different from current
-        // printf("in da loop\n");
-        
-        // char newVal[10];
-        // int n = 10;
-        
-        // START OF CRITICAL SECTION
-        // pthread_mutex_lock(pArrayLengthMutex);
-        // fptr = fopen("lengthFile.txt", "r");
-        // fgets(newVal, n, fptr);
-        // fclose(fptr);
-        // if(current != atoi(newVal)){
-        //     printf("new array length: %s\n", newVal);
-        //     current = atoi(newVal);
-        // }
-        // pthread_mutex_unlock(pArrayLengthMutex);
-        // END OF CRITICAL SECTION
-        //temp += 1;
+        pthread_mutex_lock(&ArrayLengthMutex);
+        updateLength(atoi(buffer));
+        pthread_mutex_unlock(&ArrayLengthMutex);
     }
 
     //shutdownPipeThread();
@@ -166,21 +151,17 @@ void arraySorter_shutdown() {
 
 /* Private Helper Functions */
 
-static void createArray() {
+static void createArray(int tempLength) {
     // initialize randomizer
     time_t t;
     srand((unsigned) time(&t));
 
-    if (current != length) {
-        length = current;
-    }
-
     // malloc space for array
-    array = malloc(length * sizeof(int));
+    array = malloc(tempLength * sizeof(int));
 
     // fill array with random integers from 0 to length
-    for(int i = 0; i < length; i++){
-        array[i] = rand() % length;
+    for(int i = 0; i < tempLength; i++){
+        array[i] = rand() % tempLength;
     }
 }
 
@@ -195,12 +176,12 @@ static void printArray() {
     }
 }
 
-static void sort() {
+static void sort(int tempLength) {
     int placeholder;
     int swapped = 1;
     while(swapped == 1){
         swapped = 0;
-        for(int i = 0; i < length-1; i++) {
+        for(int i = 0; i < tempLength-1; i++) {
             if(array[i] > array[i+1]) {
                 placeholder = array[i];
                 array[i] = array[i+1];
@@ -216,10 +197,14 @@ static void freeArray() {
     array = NULL;
 }
 
-// static void updateLength(int newLength) {
-//     //TODO critical section locking
-//     length = newLength;
-// }
+static void updateLength(int newLength) {
+    //TODO critical section locking
+    length = newLength;
+}
+
+static int readLength() {
+    return length;
+}
 
 static void shutdownPipeThread() {
     pthread_cancel(threadPipePID);

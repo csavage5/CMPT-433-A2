@@ -97,40 +97,50 @@ static void* listenerThread(void *arg) {
         detectCommands();
         printf("0: %s, 1: %s\n", commands[0], commands[1]);
 
+
+        // TODO CASE: user sent "count", retrieve info from array module
+
         if (strcmp("stop", commands[0]) == 0) {
             // CASE: user sent "stop" - call shutdown
             printf("Received command: shutdown\n");
             sm_startShutdown();
             commandListener_shutdown();
+
         } else if (strcmp("length", commands[0]) == 0) {
             // CASE: user sent "length" - get length of current array being sorted
-            sprintf(pMessage, "%d\n", arraySorter_getSize());
-        } else if ( strcmp("get", commands[0]) == 0) {
-            // CASE: user sent "get" - check if index is within range
-            int userInput = atoi(commands[1]);
+            sprintf(pMessage, "Current array length: %d\n", arraySorter_getSize());
 
+        } else if ( strcmp("get", commands[0]) == 0) {
+            // CASE: user sent "get" - check if second parameter is a number or command
+            int userInput = atoi(commands[1]);
+            
             if ( userInput > 0 ) {
                 // CASE: user sent valid number
-                if (userInput <= arraySorter_getSize()) {
-                    // CASE: number is within array range
-                    sprintf(pMessage, "%d\n", arraySorter_getValue(userInput));
+                int value = arraySorter_getValue(userInput);
+                
+                if (value == 0) {
+                    // CASE: userInput beyond range of array
+                    sprintf(pMessage, "Error: parameter %d is out of range\n", userInput);
                 } else {
-                    // CASE: number is beyond array range
-                    strcpy(pMessage, "Error: value is beyond array range\n");
+                    sprintf(pMessage, "Value %d: %d\n", userInput, value);
                 }
+
             } else {
                 // CASE: user sent a number <= 0 or an alphanumeric character
-                strcpy(pMessage, "Error: invalid value parameter\n");
+                sprintf(pMessage, "Error: parameter %s is invalid\n", commands[1]);
             }
-            
-        }
 
-        // TODO CASE: user sent "count"/"array", retrieve info from array module
-        
-        else if (strcmp("help", commands[0]) == 0) {
+        } else if (strcmp("help", commands[0]) == 0) {
             // TODO CASE: user sent "help", send help string
             printf("Received command: help\n");
             strcpy(pMessage, "Commands: help, get, ...\n");
+
+        } else if (strcmp("array", commands[0]) == 0) {
+            // CASE: user sent "array", send back contents of current array being sorted
+            arraySorter_getArray(pMessage);
+
+        } else if (strcmp("count", commands[0]) == 0) {
+            strcpy(pMessage, "Error: not implemented\n");
         }
 
         else {

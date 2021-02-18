@@ -5,7 +5,7 @@ void arraySorter_init();
 void arraySorter_shutdown();
 
 int arraySorter_getSize();
-int* arraySorter_getArray();
+void arraySorter_getArray();
 int arraySorter_getValue(int value);
 
 

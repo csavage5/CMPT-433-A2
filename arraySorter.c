@@ -25,7 +25,7 @@ static void* sorterThread(void *arg);
 static void* pipeThread(void *arg);
 
 static void createArray();
-static void printArray();
+//static void printArray();
 static void sort();
 static void freeArray();
 
@@ -74,14 +74,12 @@ void arraySorter_init(int *pipeToRead) {
 */
 
 static void* sorterThread(void *arg) {
-    printf("starting to sort shit\n");
+    printf("Thread [arraySorter]->sorterThread started\n");
 
     int localLength = 0;
 
     while (!sm_isShutdown()) {
-        freeArray();
 
-        // get length for array
         localLength = getLengthForNewArray();
         
         createArray(localLength);
@@ -98,6 +96,8 @@ static void* sorterThread(void *arg) {
 static void* pipeThread(void *arg) {
     // TODO
     //int temp; // to keep busy loop busy
+    printf("Thread [arraySorter]->pipeThread started\n");
+
     printf("piping\n");
     char buffer[1024];
 
@@ -134,24 +134,25 @@ int arraySorter_getSize() {
     return current;
 }
 
-// Write the current array into the given buffer
+// Write the current array's contents into the given buffer
 void arraySorter_getArray(char *buffer) {
     int length = arraySorter_getSize();
+    char *cursor = buffer;
 
-    //TODO lock array, iterate through
+    //lock array, iterate through, write to buffer
     pthread_mutex_lock(&mutArray);
 
     for(int i = 0; i < length; i++) {
-        
+
         if (i == length - 1) {
             // CASE: last element in array
-            sprintf(buffer, "%d\n", array[i]);
+            cursor += sprintf(cursor, "%d\n", array[i]);
         } else if ( (i+1) % 10 != 0 ) {
             // CASE: element not last on line
-            sprintf(buffer, "%d, ", array[i]);
+            cursor += sprintf(cursor, "%d, ", array[i]);
         } else {
             // CASE: element last on line
-            sprintf(buffer, "%d,\n", array[i]);
+            cursor += sprintf(cursor, "%d,\n", array[i]);
         }
             
     }
@@ -160,17 +161,26 @@ void arraySorter_getArray(char *buffer) {
 
 }
 
+// Returns an integer >= 1 corresponding to requested element, 0 if request is out of range
 int arraySorter_getValue(int value) {
-    if(value-1 < 0 || value > mostRecentLength) {
-        printf("Error! Value out of index.\n");
-    }
-    else{
+    
+    pthread_mutex_lock(&mutArray);
+
+    int currentLength = arraySorter_getSize();
+    int foundValue = 0;
+
+    if(value >= 1 && value <= currentLength) {    
         printf("value: %d\n", array[value-1]);
-        return array[value-1];
+        foundValue = array[value-1];
     }
-    return -1;
+
+    pthread_mutex_unlock(&mutArray);
+
+    return foundValue;
+
 }
 
+// Begin shutdown of sorter and pipe threads.
 void arraySorter_shutdown() {
 
     shutdownPipeThread();
@@ -190,6 +200,9 @@ static void createArray(int length) {
     srand((unsigned) time(&t));
 
     pthread_mutex_lock(&mutArray);
+
+    free(array);
+    array = NULL;
 
     // malloc space for array
     array = malloc(length * sizeof(int));
@@ -241,6 +254,7 @@ static void sort(int length) {
     }
 }
 
+// Frees array - ONLY used after threads are shut down
 static void freeArray() {
     free(array);
     array = NULL;

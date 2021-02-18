@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "shutdownManager.h"
+#include "displayDriver.h"
 
 #define I2C_DEVICE_ADDRESS 0x20
 #define REG_DIRA 0x00

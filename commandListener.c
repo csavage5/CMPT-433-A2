@@ -97,9 +97,6 @@ static void* listenerThread(void *arg) {
         detectCommands();
         printf("0: %s, 1: %s\n", commands[0], commands[1]);
 
-
-        // TODO CASE: user sent "count", retrieve info from array module
-
         if (strcmp("stop", commands[0]) == 0) {
             // CASE: user sent "stop" - call shutdown
             printf("Received command: shutdown\n");
@@ -142,8 +139,8 @@ static void* listenerThread(void *arg) {
             strcpy(pMessage, "Commands: help, get, ...\n");
 
         } else if (strcmp("count", commands[0]) == 0) {
-            //TODO
-            strcpy(pMessage, "Error: not implemented\n");
+            long temp = arraySorter_getTotalSorts();
+            sprintf(pMessage, "Number of arrays sorted: %ld\n", temp);
         } else {
             strcpy(pMessage, "Error: invalid command\n");
         }

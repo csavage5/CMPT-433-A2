@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "shutdownManager.h"
+#include "potentiometer.h"
 
 #define A2D_FILE_VOLTAGE0 "/sys/bus/iio/devices/iio:device0/in_voltage0_raw"
 #define A2D_VOLTAGE_REF_V 1.8

@@ -18,7 +18,7 @@ static pthread_cond_t condWriterAccess = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t mutWriterAccess = PTHREAD_MUTEX_INITIALIZER;
 
 
-
+// Returns 1 if shutdown has been initiated
 int sm_isShutdown() {
 
     pthread_mutex_lock(&mutReaderIn);   // increment the reader counter

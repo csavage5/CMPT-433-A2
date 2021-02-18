@@ -8,5 +8,6 @@ int arraySorter_getSize();
 void arraySorter_getArray();
 int arraySorter_getValue(int value);
 
+long arraySorter_getTotalSorts();
 
 #endif

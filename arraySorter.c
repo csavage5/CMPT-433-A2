@@ -5,27 +5,31 @@
 #include <unistd.h>
 
 #include "shutdownManager.h"
-
-static pthread_t threadPipePID;
-static pthread_t threadSorterPID;
+#include "arraySorter.h"
 
 static pthread_mutex_t mutMostRecentLength = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mutCurrentArrayLength = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mutArray = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mutTotalSorts = PTHREAD_MUTEX_INITIALIZER;
 
 //static pthread_mutex_t mutLength = PTHREAD_MUTEX_INITIALIZER;
 
 int mostRecentLength = 100; // most recent length received from potentiometer
 int currentArrayLength = 0; // length of current array being sorted
 int current = 0;
+long totalSorts = 0L;
 int *array = NULL;
 FILE *fptr;
 
+static pthread_t threadPipePID;
+static pthread_t threadSorterPID;
+static pthread_t threadTimerPID;
+
 static void* sorterThread(void *arg);
 static void* pipeThread(void *arg);
+static void* timerThread(void *arg);
 
 static void createArray();
-//static void printArray();
 static void sort();
 static void freeArray();
 
@@ -33,13 +37,14 @@ static void updateMostRecentLength(int newLength);
 static int getMostRecentLength();
 static int getLengthForNewArray();
 
+static void incrementTotalSorts();
+
 static void shutdownPipeThread();
 static void shutdownSorterThread();
+static void shutdownTimerThread();
 
 static int pipeFromPot;
-//static FILE *pipeToDisplayDriver;
 
-// TODO take in pipes
 void arraySorter_init(int *pipeToRead) {
     //pArrayLengthMutex = ArrayLengthMutex;
 
@@ -49,6 +54,8 @@ void arraySorter_init(int *pipeToRead) {
     // start up threads
     pthread_create(&threadPipePID, NULL, pipeThread, NULL);
     pthread_create(&threadSorterPID, NULL, sorterThread, NULL);
+    pthread_create(&threadTimerPID, NULL, timerThread, NULL);
+
     printf("Module [arraySorter] initialized\n");
 }
 
@@ -71,8 +78,15 @@ void arraySorter_init(int *pipeToRead) {
             send counter value to display module via pipe
             reset counter to 1
             reset timer to 0
+
+
+        edge case: If it takes more than one second to sort a 
+                   single array, then the second when an array 
+                   finished sorting will show “1”, otherwise show “0’.
+
 */
 
+// Sort arrays until shutdown
 static void* sorterThread(void *arg) {
     printf("Thread [arraySorter]->sorterThread started\n");
 
@@ -85,7 +99,8 @@ static void* sorterThread(void *arg) {
         createArray(localLength);
         sort(localLength);
 
-        //TODO counter
+        incrementTotalSorts();
+
     }
     
     shutdownSorterThread();
@@ -93,18 +108,13 @@ static void* sorterThread(void *arg) {
     return NULL;
 }
 
+// Receive data via potentiometer pipe
 static void* pipeThread(void *arg) {
-    // TODO
-    //int temp; // to keep busy loop busy
     printf("Thread [arraySorter]->pipeThread started\n");
 
-    printf("piping\n");
     char buffer[1024];
 
     while (!sm_isShutdown()) {   
-        // READ FROM PIPE HERE
-        //fptr = fdopen(pipeFromPot, "r");
-
         read(pipeFromPot, buffer, sizeof(buffer));
         printf("arraySorter read \"%s\" from incoming pipe\n", buffer);
 
@@ -118,7 +128,65 @@ static void* pipeThread(void *arg) {
 
 }
 
+// Record number of arrays sorted per second and send to displayDriver
+static void* timerThread(void *arg) {
+    printf("Thread [arraySorter]->timerThread started\n");
 
+    time_t timeStart = time(NULL);
+    long prevTotalSorts = arraySorter_getTotalSorts();
+
+    while (!sm_isShutdown()) {
+
+        if ( difftime(time(NULL), timeStart) >= 1 ){
+            // CASE: second has elapsed
+
+            // TODO send value over pipe to displayDriver
+            
+            printf("Sorted [%ld] arrays in prev second\n", arraySorter_getTotalSorts() - prevTotalSorts);
+            prevTotalSorts = arraySorter_getTotalSorts();
+
+            timeStart = time(NULL);
+            
+        }
+    }
+
+    shutdownTimerThread();
+
+    return NULL;
+
+}
+
+
+// Begin shutdown of sorter and pipe threads.
+void arraySorter_shutdown() {
+
+    shutdownPipeThread();
+    shutdownSorterThread();
+    shutdownTimerThread();
+
+    // free heap memory
+    freeArray();
+    printf("Module [arraySorter] shut down\n");
+}
+
+static void shutdownPipeThread() {
+    pthread_cancel(threadPipePID);
+    pthread_join(threadPipePID, NULL);
+    printf("Thread [arraySorter]->pipeThread shutdown\n");
+}
+
+static void shutdownSorterThread() {
+    pthread_cancel(threadSorterPID);
+    pthread_join(threadSorterPID, NULL);
+    printf("Thread [arraySorter]->sorterThread shutdown\n");
+}
+
+
+static void shutdownTimerThread() {
+    pthread_cancel(threadTimerPID);
+    pthread_join(threadTimerPID, NULL);
+    printf("Thread [arraySorter]->timerThread shutdown\n");
+}
 
 /* Public Helper Functions */
 
@@ -180,16 +248,23 @@ int arraySorter_getValue(int value) {
 
 }
 
-// Begin shutdown of sorter and pipe threads.
-void arraySorter_shutdown() {
 
-    shutdownPipeThread();
-    shutdownSorterThread();
 
-    // free heap memory
-    freeArray();
-    printf("Module [arraySorter] shutting down...\n");
+
+long arraySorter_getTotalSorts() {
+    long temp;
+    pthread_mutex_lock(&mutTotalSorts);
+    temp = totalSorts;
+    pthread_mutex_unlock(&mutTotalSorts);
+    return temp;
 }
+
+static void incrementTotalSorts() {
+    pthread_mutex_lock(&mutTotalSorts);
+    totalSorts += 1L;
+    pthread_mutex_unlock(&mutTotalSorts);
+}
+
 
 
 /* Private Helper Functions */
@@ -214,23 +289,6 @@ static void createArray(int length) {
 
     pthread_mutex_unlock(&mutArray);
 }
-
-// static void printArray(int length) {
-//     for(int i = 0; i < length; i++) {
-        
-//         pthread_mutex_lock(&mutArray);
-        
-//         if(i != length-1){
-//             printf("%d, ", array[i]);
-//         }
-//         else{
-//             printf("%d\n", array[i]);
-//         }
-
-//         pthread_mutex_lock(&mutArray);
-
-//     }
-// }
 
 static void sort(int length) {
     int placeholder;
@@ -262,7 +320,6 @@ static void freeArray() {
 
 // save new value from the potentiometer
 static void updateMostRecentLength(int newLength) {
-    //TODO critical section locking
 
      pthread_mutex_lock(&mutMostRecentLength);
      mostRecentLength = newLength;    
@@ -272,7 +329,6 @@ static void updateMostRecentLength(int newLength) {
 
 // Get the most recent value from the potentiometer
 static int getMostRecentLength() {
-    // TODO critical section locking
     int temp;
     pthread_mutex_lock(&mutMostRecentLength);
     {
@@ -295,15 +351,5 @@ static int getLengthForNewArray() {
     pthread_mutex_unlock(&mutCurrentArrayLength);
 
     return current;
-}
-
-static void shutdownPipeThread() {
-    pthread_cancel(threadPipePID);
-    pthread_join(threadPipePID, NULL);
-}
-
-static void shutdownSorterThread() {
-    pthread_cancel(threadSorterPID);
-    pthread_join(threadSorterPID, NULL);
 }
 

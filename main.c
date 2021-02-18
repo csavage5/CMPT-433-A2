@@ -29,6 +29,7 @@ int main() {
     commandListener_shutdown();
     arraySorter_shutdown();
     potentiometer_shutdown();
+    displayDriver_shutdown();
 
 
     return 0;

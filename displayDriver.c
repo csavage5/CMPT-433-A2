@@ -25,7 +25,6 @@
 #define I2CDRV_LINUX_BUS1 "/dev/i2c-1"
 #define I2CDRV_LINUX_BUS2 "/dev/i2c-2"
 
-static char value[3];
 
 static pthread_t threadPipePID;
 static pthread_t threadDisplayPID;
@@ -41,9 +40,14 @@ static int initI2cBus(char* bus, int address);
 static void writeI2cReg(int i2cFileDesc, unsigned char regAddr, unsigned char value);
 // static unsigned char readI2cReg(int i2cFileDesc, unsigned char regAddr);
 
+static char displayValue[3];
+static int pipeFromArraySorter;
+static int pipeValue;
+
 // TODO take in arraySorter -> displayDriver 
-void displayDriver_init() {
-    memset(value, 0, sizeof(value));
+void displayDriver_init(int *pipeToRead) {
+    memset(displayValue, 0, sizeof(displayValue));
+    pipeFromArraySorter = pipeToRead[0];
     // start up threads
     pthread_create(&threadPipePID, NULL, pipeThread, NULL);
     pthread_create(&threadDisplayPID, NULL, displayThread, NULL);
@@ -101,13 +105,13 @@ static void* displayThread(void *arg) {
             // control first display
             toggleLED(1, 1);
             toggleLED(2, 0);
-            displayVal(value[0]);
+            displayVal(displayValue[0]);
             nanosleep(&reqDelay, (struct timespec *) NULL);
 
             // Control second display
             toggleLED(1, 0);
             toggleLED(2, 1);
-            displayVal(value[1]);
+            displayVal(displayValue[1]);
             nanosleep(&reqDelay, (struct timespec *) NULL);
         }
         pthread_mutex_unlock(&mutDisplayValue);
@@ -123,13 +127,15 @@ static void* pipeThread(void *arg) {
 
     while (sm_isShutdown() == 0) {
         // TODO wait for data from pipe
-        
+        read(pipeFromArraySorter, &pipeValue, sizeof(pipeValue));
         // TODO update *value when new pipe data comes in, assuming pipe won't send duplicate data back-to-back
-        // if (pipe_value < 10) {
-        //     sprintf(value, "0%d", pipe_value);
-        // } else {
-        //     sprintf(value, "%d", pipe_value);
-        // }
+        pthread_mutex_lock(&mutDisplayValue);
+        if (pipeValue < 10) {
+            sprintf(displayValue, "0%d", pipeValue);
+        } else {
+            sprintf(displayValue, "%d", pipeValue);
+        }
+        pthread_mutex_unlock(&mutDisplayValue); 
     }
 
     return NULL;           

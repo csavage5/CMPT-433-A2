@@ -44,12 +44,14 @@ static void shutdownSorterThread();
 static void shutdownTimerThread();
 
 static int pipeFromPot;
+static int pipeToDisplay;
 
-void arraySorter_init(int *pipeToRead) {
+void arraySorter_init(int *pipeToRead, int *pipeToWrite) {
     //pArrayLengthMutex = ArrayLengthMutex;
 
     // save pipe info
     pipeFromPot = pipeToRead[0];
+    pipeToDisplay = pipeToWrite[1];
     
     // start up threads
     pthread_create(&threadPipePID, NULL, pipeThread, NULL);
@@ -134,6 +136,7 @@ static void* timerThread(void *arg) {
 
     time_t timeStart = time(NULL);
     long prevTotalSorts = arraySorter_getTotalSorts();
+    int sortsInLastSecond = 0;
 
     while (!sm_isShutdown()) {
 
@@ -141,9 +144,10 @@ static void* timerThread(void *arg) {
             // CASE: second has elapsed
 
             // TODO send value over pipe to displayDriver
-            
-            printf("Sorted [%ld] arrays in prev second\n", arraySorter_getTotalSorts() - prevTotalSorts);
+            sortsInLastSecond = arraySorter_getTotalSorts() - prevTotalSorts;
+            printf("Sorted [%d] arrays in prev second\n", sortsInLastSecond);
             prevTotalSorts = arraySorter_getTotalSorts();
+            write(pipeToDisplay, &sortsInLastSecond, sizeof(sortsInLastSecond));
 
             timeStart = time(NULL);
             
@@ -282,9 +286,9 @@ static void createArray(int length) {
     // malloc space for array
     array = malloc(length * sizeof(int));
 
-    // fill array with random integers from 0 to length
+    // fill array with random integers from 1 to length
     for(int i = 0; i < length; i++){
-        array[i] = rand() % length;
+        array[i] = (rand() % length) + 1;
     }
 
     pthread_mutex_unlock(&mutArray);

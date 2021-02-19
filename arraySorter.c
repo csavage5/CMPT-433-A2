@@ -122,7 +122,7 @@ static void* pipeThread(void *arg) {
         printf("arraySorter read \"%s\" from incoming pipe\n", buffer);
 
         updateMostRecentLength(atoi(buffer));
- 
+
     }
     printf("Thread [arraySorter]->pipeThread starting shut down...\n");
     shutdownPipeThread();
@@ -287,7 +287,7 @@ static void createArray(int length) {
     // fill array with random integers from 1 to length
     for(int i = 0; i < length; i++){
         //from https://stackoverflow.com/questions/17846212/generate-a-random-number-between-1-and-10-in-c/49099642
-        array[i] = rand() % (length-1) + 1;
+        array[i] = rand() % length + 1;
     }
 
     pthread_mutex_unlock(&mutArray);

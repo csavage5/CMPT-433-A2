@@ -9,47 +9,65 @@ static int shutdownStatus = 0;
 
 // for reader-writer problem of checking for shutdown and starting shutdown
 // reader-writer problem solution (sm_isShutdown and sm_startShutdown) adapted from https://arxiv.org/pdf/1309.4507.pdf (#3)
-int numReaders = 0;
-static pthread_mutex_t mutReaderIn = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t mutReaderOut = PTHREAD_MUTEX_INITIALIZER;
+// int numReaders = 0;
+// static pthread_mutex_t mutReaderIn = PTHREAD_MUTEX_INITIALIZER;
+// static pthread_mutex_t mutReaderOut = PTHREAD_MUTEX_INITIALIZER;
 
-int writerRequest = 0;
-static pthread_cond_t condWriterAccess = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t mutWriterAccess = PTHREAD_MUTEX_INITIALIZER;
+// int writerRequest = 0;
+// static pthread_cond_t condWriterAccess = PTHREAD_COND_INITIALIZER;
+// static pthread_mutex_t mutWriterAccess = PTHREAD_MUTEX_INITIALIZER;
 
+static pthread_mutex_t mutAccessShutdownStatus = PTHREAD_MUTEX_INITIALIZER;
 
 // Returns 1 if shutdown has been initiated
 int sm_isShutdown() {
-
-    pthread_mutex_lock(&mutReaderIn);   // increment the reader counter
+    int temp = 0;
+    pthread_mutex_lock(&mutAccessShutdownStatus);
     {
-        numReaders += 1;
+        temp = shutdownStatus;
     }
-    pthread_mutex_unlock(&mutReaderIn);
-
-    // *Critical Section*: check value of condition variable, return true / false
-    int temp = shutdownStatus;
+    pthread_mutex_unlock(&mutAccessShutdownStatus);
     
-    pthread_mutex_lock(&mutReaderOut);
-    {
-        numReaders -= 1;
-
-        if (writerRequest == 1 && numReaders == 0) {
-            // CASE: writer wants to access and all readers
-            //       have finished - give writer access
-
-            pthread_cond_signal(&condWriterAccess);
-
-        }
-
-    }
-    pthread_mutex_unlock(&mutReaderOut);
-
-
     return temp;
+   
+    // pthread_mutex_lock(&mutReaderIn);   // increment the reader counter
+    // {
+    //     numReaders += 1;
+    // }
+    // pthread_mutex_unlock(&mutReaderIn);
+
+    // // *Critical Section*: check value of condition variable, return true / false
+    // int temp = shutdownStatus;
+    
+    // pthread_mutex_lock(&mutReaderOut);
+    // {
+    //     numReaders -= 1;
+
+    //     if (writerRequest == 1 && numReaders == 0) {
+    //         // CASE: writer wants to access and all readers
+    //         //       have finished - give writer access
+
+    //         pthread_cond_signal(&condWriterAccess);
+
+    //     }
+
+    // }
+    // pthread_mutex_unlock(&mutReaderOut);
+
+
+    // return temp;
 }
 
 void sm_startShutdown() {
+    pthread_mutex_lock(&mutAccessShutdownStatus);
+    {
+      shutdownStatus = 1;  
+    }
+    pthread_mutex_unlock(&mutAccessShutdownStatus);
+
+    pthread_cond_signal(&condReleaseMain);
+    
+    /*
     // release main thread from waiting
     pthread_cond_signal(&condReleaseMain);
 
@@ -87,7 +105,7 @@ void sm_startShutdown() {
         shutdownStatus = 1;
     }
     pthread_mutex_unlock(&mutReaderIn); // allow new readers in
-
+    */
 
 }
 

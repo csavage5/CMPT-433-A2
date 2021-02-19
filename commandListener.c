@@ -157,6 +157,9 @@ static void* listenerThread(void *arg) {
         memcpy(pMessage, messageBuffer, messageLen);
 
     }
+    printf("Module [commandListener] starting shut down...\n");
+
+    commandListener_shutdown();
 
     return NULL;
 
@@ -197,5 +200,5 @@ void commandListener_shutdown() {
     // free heap memory
     free(pMessage);
     pMessage = NULL;
-    printf("Module [commandListener] shutting down...\n");
+    printf("Module [commandListener] shut down\n");
 }

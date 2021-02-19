@@ -72,7 +72,7 @@ static void* potentiometer_getLength(void *arg) {
     int current = 0;
     int arrayBounds[10] = {0,500,1000,1500,2000,2500,3000,3500,4000,4100};
     int arraySizes[10] = {1,20,60,120,250,300,500,800,1200,2100};
-    while (true) {
+    while (!sm_isShutdown()) {
         int reading = getVoltage0Reading();
         int i = 0;
         while(reading >= arrayBounds[i]){
@@ -100,7 +100,10 @@ static void* potentiometer_getLength(void *arg) {
         struct timespec reqDelay = {seconds, nanoseconds};
         nanosleep(&reqDelay, (struct timespec *) NULL);
     }
-    
+    printf("Thread [potentiometerReader]->getLength starting shut down...\n");
+
+    potentiometer_shutdown();
+
     return NULL;
 }
 
@@ -126,9 +129,12 @@ void potentiometer_shutdown() {
     pthread_cancel(threadPipePID);
     pthread_join(threadPipePID, NULL);
 
+    printf("Thread [potentiometerReader]->getLength shut down\n");
+
+
     // free heap memory
     free(buffer);
     buffer = NULL;
 
-    printf("Module [potentiometerReader] shutting down...\n");
+    printf("Module [potentiometerReader] shut down\n");
 }

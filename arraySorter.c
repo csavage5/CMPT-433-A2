@@ -102,7 +102,8 @@ static void* sorterThread(void *arg) {
         incrementTotalSorts();
 
     }
-    
+
+    printf("Thread [arraySorter]->sorterThread starting shut down...\n");
     shutdownSorterThread();
 
     return NULL;
@@ -121,7 +122,7 @@ static void* pipeThread(void *arg) {
         updateMostRecentLength(atoi(buffer));
  
     }
-
+    printf("Thread [arraySorter]->pipeThread starting shut down...\n");
     shutdownPipeThread();
 
     return NULL;
@@ -149,7 +150,7 @@ static void* timerThread(void *arg) {
             
         }
     }
-
+    printf("Thread [arraySorter]->timerThread starting shut down...\n");
     shutdownTimerThread();
 
     return NULL;
@@ -172,20 +173,20 @@ void arraySorter_shutdown() {
 static void shutdownPipeThread() {
     pthread_cancel(threadPipePID);
     pthread_join(threadPipePID, NULL);
-    printf("Thread [arraySorter]->pipeThread shutdown\n");
+    printf("Thread [arraySorter]->pipeThread shut down\n");
 }
 
 static void shutdownSorterThread() {
     pthread_cancel(threadSorterPID);
     pthread_join(threadSorterPID, NULL);
-    printf("Thread [arraySorter]->sorterThread shutdown\n");
+    printf("Thread [arraySorter]->sorterThread shut down\n");
 }
 
 
 static void shutdownTimerThread() {
     pthread_cancel(threadTimerPID);
     pthread_join(threadTimerPID, NULL);
-    printf("Thread [arraySorter]->timerThread shutdown\n");
+    printf("Thread [arraySorter]->timerThread shut down\n");
 }
 
 /* Public Helper Functions */
@@ -249,8 +250,6 @@ int arraySorter_getValue(int value) {
 }
 
 
-
-
 long arraySorter_getTotalSorts() {
     long temp;
     pthread_mutex_lock(&mutTotalSorts);
@@ -284,7 +283,8 @@ static void createArray(int length) {
 
     // fill array with random integers from 0 to length
     for(int i = 0; i < length; i++){
-        array[i] = rand() % length;
+        //from https://stackoverflow.com/questions/17846212/generate-a-random-number-between-1-and-10-in-c/49099642
+        array[i] = rand() % (length-1) + 1;
     }
 
     pthread_mutex_unlock(&mutArray);

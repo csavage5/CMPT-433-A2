@@ -91,7 +91,7 @@ static void* listenerThread(void *arg) {
         printf("Received %s\n", messageBuffer);
 
         if (messageLen == -1) {
-            printf("Receive Error: %s\n", strerror(errno));
+            printf("Receive Error: %s\n\n", strerror(errno));
         }
 
         detectCommands();
@@ -113,9 +113,9 @@ static void* listenerThread(void *arg) {
                 
                 if (value == 0) {
                     // CASE: userInput beyond range of array
-                    sprintf(pMessage, "Error: parameter %d is out of range\n", userInput);
+                    sprintf(pMessage, "Error: parameter %d is out of range\n\n", userInput);
                 } else {
-                    sprintf(pMessage, "Value %d: %d\n", userInput, value);
+                    sprintf(pMessage, "Value %d: %d\n\n", userInput, value);
                 }
 
             } else {
@@ -126,23 +126,23 @@ static void* listenerThread(void *arg) {
 
                 }  else if (strcmp("length", commands[1]) == 0) {
                     // CASE: user sent "length" - get length of current array being sorted
-                    sprintf(pMessage, "Current array length: %d\n", arraySorter_getSize());
+                    sprintf(pMessage, "Current array length: %d\n\n", arraySorter_getSize());
 
                 } else {
-                    sprintf(pMessage, "Error: parameter %s is invalid\n", commands[1]);
+                    sprintf(pMessage, "Error: parameter %s is invalid\n\n", commands[1]);
                 }
             }
 
         } else if (strcmp("help", commands[0]) == 0) {
             // TODO CASE: user sent "help", send help string
             printf("Received command: help\n");
-            strcpy(pMessage, "Commands: help, get, ...\n");
+            strcpy(pMessage, "Commands:\ncount: returns the number of arrays sorted so far\nget #: get the #-th element of the array currently being sorted\nget length: returns the length of the array currently being sorted\nget array: returns all data from the array currently being sorted\nstop: shutdown program\n\n");
 
         } else if (strcmp("count", commands[0]) == 0) {
             long temp = arraySorter_getTotalSorts();
-            sprintf(pMessage, "Number of arrays sorted: %ld\n", temp);
+            sprintf(pMessage, "Number of arrays sorted: %ld\n\n", temp);
         } else {
-            strcpy(pMessage, "Error: invalid command\n");
+            strcpy(pMessage, "Error: invalid command\n\n");
         }
 
         // reply with message
@@ -150,7 +150,7 @@ static void* listenerThread(void *arg) {
                         0, (struct sockaddr *) &sinRemote, sinRemote_len);
         
         if (i == -1) {
-            printf("Reply Error: %s\n", strerror(errno));
+            printf("Reply Error: %s\n\n", strerror(errno));
         }
 
         // wipe messageBuffer for next command

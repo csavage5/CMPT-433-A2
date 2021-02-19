@@ -229,7 +229,6 @@ void arraySorter_getArray(char *buffer) {
         }
             
     }
-
     pthread_mutex_unlock(&mutArray);
 
 }

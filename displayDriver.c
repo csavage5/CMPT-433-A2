@@ -132,7 +132,11 @@ static void* pipeThread(void *arg) {
         pthread_mutex_lock(&mutDisplayValue);
         if (pipeValue < 10) {
             sprintf(displayValue, "0%d", pipeValue);
-        } else {
+        } 
+        else if(pipeValue > 99) {
+            sprintf(displayValue, "99");
+        }
+        else {
             sprintf(displayValue, "%d", pipeValue);
         }
         pthread_mutex_unlock(&mutDisplayValue); 

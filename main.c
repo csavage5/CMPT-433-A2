@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "commandListener.h"
 #include "shutdownManager.h"
@@ -22,24 +23,24 @@ config-pin P9_17 i2c \n\
 
 
 int main() {
-
+    printf("Setting up display pins...\n");
     // Create pipes
     int pipePotToArraySorter[2];
     pipe(pipePotToArraySorter);
     int pipeArraySorterToDisplay[2];
     pipe(pipeArraySorterToDisplay);
 
-    // TODO call thread constructors
+    // Call thread constructors
     system(SHELLSCRIPT);
     commandListener_init();
     arraySorter_init(&pipePotToArraySorter, &pipeArraySorterToDisplay);
     potentiometer_init(&pipePotToArraySorter);
     displayDriver_init(&pipeArraySorterToDisplay);
 
-    // TODO wait until shutdown is triggered 
+    // Wait until shutdown is triggered 
     sm_waitForShutdownOnMainThread();
 
-    // TODO call thread destructors
+    // Call thread destructors
     commandListener_shutdown();
     arraySorter_shutdown();
     potentiometer_shutdown();

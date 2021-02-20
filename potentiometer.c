@@ -108,7 +108,7 @@ static void* potentiometer_getLength(void *arg) {
 }
 
 static void potentiometer_sendData() {
-    fptr = fdopen(pipeToArraySorter, "w");
+    //fptr = fdopen(pipeToArraySorter, "w");
     
     memset(buffer, '\0', sizeof(*buffer));
     sprintf(buffer, "%d", arrLength);

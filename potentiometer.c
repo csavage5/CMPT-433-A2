@@ -19,7 +19,7 @@ static pthread_t threadPipePID;
 float arrLengthFloat = 0;
 int arrLength = 0;
 
-char *buffer;
+char buffer[5];
 FILE *fptr;
 
 static int getVoltage0Reading();
@@ -67,7 +67,7 @@ static int getVoltage0Reading() {
 
 // Change reading from potentiometer to array length
 static void* potentiometer_getLength(void *arg) {
-    buffer = (char *)malloc(5 * sizeof(char));
+    //buffer = (char *)malloc(5 * sizeof(char));
 
     int current = 0;
     int arrayBounds[10] = {0,500,1000,1500,2000,2500,3000,3500,4000,4100};
@@ -133,8 +133,8 @@ void potentiometer_shutdown() {
 
 
     // free heap memory
-    free(buffer);
-    buffer = NULL;
+    // free(buffer);
+    // buffer = NULL;
 
     printf("Module [potentiometerReader] shut down\n");
 }

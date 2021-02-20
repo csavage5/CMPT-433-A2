@@ -84,7 +84,7 @@ static void* listenerThread(void *arg) {
     strcpy(pMessage, "Hello there!\n");
 
     //while(!isShutdown()) {
-    while(1) {
+    while(!sm_isShutdown()) {
 
         // sinRemote captures counterparty address information
         messageLen = recvfrom(socketDescriptor, messageBuffer, MAX_LEN, 0, (struct sockaddr *) &sinRemote, &sinRemote_len);
@@ -100,8 +100,9 @@ static void* listenerThread(void *arg) {
         if (strcmp("stop", commands[0]) == 0) {
             // CASE: user sent "stop" - call shutdown
             printf("Received command: shutdown\n");
+            strcpy(pMessage, "Program shutting down\n");
+
             sm_startShutdown();
-            commandListener_shutdown();
 
         } else if ( strcmp("get", commands[0]) == 0) {
             // CASE: user sent "get" - check if second parameter is a number or command

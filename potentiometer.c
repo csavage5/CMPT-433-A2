@@ -16,17 +16,17 @@
 
 static pthread_t threadPipePID;
 
-float arrLengthFloat = 0;
-int arrLength = 0;
+static float arrLengthFloat = 0;
+static int arrLength = 0;
 
-char buffer[5];
-FILE *fptr;
+static char buffer[5];
+static FILE *fptr;
 
 static int getVoltage0Reading();
 static void* potentiometer_getLength(void *arg);
 static void potentiometer_sendData();
 
-int pipeToArraySorter;
+static int pipeToArraySorter;
 
 
 // static void shutdownPipeThread();

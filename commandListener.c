@@ -31,7 +31,6 @@ static void detectCommands();
 
 void commandListener_init() {
 
-    //TODO start thread
     pthread_create(&threadPID, NULL, listenerThread, NULL);
     printf("Module [commandListener] initialized\n");
 
@@ -83,7 +82,8 @@ static void* listenerThread(void *arg) {
     memcpy(pMessage, messageBuffer, messageLen);
     strcpy(pMessage, "Hello there!\n");
 
-    //while(!isShutdown()) {
+    char *endptr = NULL; // for strtol
+
     while(!sm_isShutdown()) {
 
         // sinRemote captures counterparty address information
@@ -106,21 +106,22 @@ static void* listenerThread(void *arg) {
 
         } else if ( strcmp("get", commands[0]) == 0) {
             // CASE: user sent "get" - check if second parameter is a number or command
-            int userInput = atoi(commands[1]);
-            
-            if ( userInput > 0 ) {
+            //int userInput = atoi(commands[1]);
+            int userInput = (int) strtol(commands[1], &endptr, 10);
+
+            if ( endptr != commands[1] ) {
                 // CASE: user sent a number - get value from the array
                 int value = arraySorter_getValue(userInput);
                 
                 if (value == 0) {
                     // CASE: userInput beyond range of array
-                    sprintf(pMessage, "Error: parameter %d is out of range\n\n", userInput);
+                    sprintf(pMessage, "Error: parameter \"%d\" is out of range - enter a number between 1 and %d\n\n", userInput, arraySorter_getSize());
                 } else {
                     sprintf(pMessage, "Value %d: %d\n\n", userInput, value);
                 }
 
             } else {
-                // CASE: user sent a string containing at least one non-numeral character
+                // CASE: user sent a string starting with a non-number
                 if (strcmp("array", commands[1]) == 0) {
                     // CASE: user sent "array", send back contents of current array being sorted
                     arraySorter_getArray(pMessage);
@@ -130,12 +131,11 @@ static void* listenerThread(void *arg) {
                     sprintf(pMessage, "Current array length: %d\n\n", arraySorter_getSize());
 
                 } else {
-                    sprintf(pMessage, "Error: parameter %s is invalid\n\n", commands[1]);
+                    sprintf(pMessage, "Error: parameter \"%s\" is invalid\n\n", commands[1]);
                 }
             }
 
         } else if (strcmp("help", commands[0]) == 0) {
-            // TODO CASE: user sent "help", send help string
             printf("Received command: help\n");
             strcpy(pMessage, "Commands:\ncount: returns the number of arrays sorted so far\nget #: get the #-th element of the array currently being sorted\nget length: returns the length of the array currently being sorted\nget array: returns all data from the array currently being sorted\nstop: shutdown program\n\n");
 
@@ -143,7 +143,7 @@ static void* listenerThread(void *arg) {
             long temp = arraySorter_getTotalSorts();
             sprintf(pMessage, "Number of arrays sorted: %ld\n\n", temp);
         } else {
-            strcpy(pMessage, "Error: invalid command\n\n");
+            sprintf(pMessage, "Error: invalid command \"%s\"\n\n", commands[0]);
         }
 
         // reply with message
@@ -158,8 +158,8 @@ static void* listenerThread(void *arg) {
         memcpy(pMessage, messageBuffer, messageLen);
 
     }
-    printf("Module [commandListener] starting shut down...\n");
 
+    printf("Thread [commandListener]->listenerThread starting shut down...\n");
     commandListener_shutdown();
 
     return NULL;
@@ -194,6 +194,8 @@ static void detectCommands() {
 void commandListener_shutdown() {
     pthread_cancel(threadPID);
     pthread_join(threadPID, NULL);
+
+    printf("Thread [commandListener]->listenerThread shut down\n");
 
     // close socket
     close(socketDescriptor);

@@ -165,6 +165,11 @@ void arraySorter_shutdown() {
 
     // free heap memory
     freeArray();
+
+    // close pipes
+    close(pipeFromPot);
+    close(pipeToDisplay);
+
     printf("Module [arraySorter] shut down\n");
 }
 
@@ -195,7 +200,9 @@ int arraySorter_getSize() {
 
     // save new value into CurrentArrayLength
     pthread_mutex_lock(&mutCurrentArrayLength);
-    current = currentArrayLength;
+    {
+        current = currentArrayLength;
+    }
     pthread_mutex_unlock(&mutCurrentArrayLength);
 
     return current;
@@ -203,25 +210,29 @@ int arraySorter_getSize() {
 
 // Write the current array's contents into the given buffer
 void arraySorter_getArray(char *buffer) {
-    int length = arraySorter_getSize();
+    
     char *cursor = buffer;
 
     //lock array, iterate through, write to buffer
     pthread_mutex_lock(&mutArray);
+    {
 
-    for(int i = 0; i < length; i++) {
+        int length = arraySorter_getSize();
 
-        if (i == length - 1) {
-            // CASE: last element in array
-            cursor += sprintf(cursor, "%d\n", array[i]);
-        } else if ( (i+1) % 10 != 0 ) {
-            // CASE: element not last on line
-            cursor += sprintf(cursor, "%d, ", array[i]);
-        } else {
-            // CASE: element last on line
-            cursor += sprintf(cursor, "%d,\n", array[i]);
+        for(int i = 0; i < length; i++) {
+
+            if (i == length - 1) {
+                // CASE: last element in array
+                cursor += sprintf(cursor, "%d\n", array[i]);
+            } else if ( (i+1) % 10 != 0 ) {
+                // CASE: element not last on line
+                cursor += sprintf(cursor, "%d, ", array[i]);
+            } else {
+                // CASE: element last on line
+                cursor += sprintf(cursor, "%d,\n", array[i]);
+            }
+                
         }
-            
     }
     pthread_mutex_unlock(&mutArray);
 
@@ -271,19 +282,17 @@ static void createArray(int length) {
     srand((unsigned) time(&t));
 
     pthread_mutex_lock(&mutArray);
+    {
+        freeArray();
+      
+        // malloc space for array
+        array = malloc(length * sizeof(int));
 
-    free(array);
-    array = NULL;
-
-    // malloc space for array
-    array = malloc(length * sizeof(int));
-
-    // fill array with random integers from 1 to length
-    for(int i = 0; i < length; i++){
-        //from https://stackoverflow.com/questions/17846212/generate-a-random-number-between-1-and-10-in-c/49099642
-        array[i] = rand() % length + 1;
+        // fill array with random integers from 1 to length
+        for(int i = 0; i < length; i++){
+            array[i] = rand() % length + 1;
+        }
     }
-
     pthread_mutex_unlock(&mutArray);
 }
 
@@ -309,7 +318,7 @@ static void sort(int length) {
     }
 }
 
-// Frees array - ONLY used after threads are shut down
+// Frees array - must lock mutArray before calling if threads are still active
 static void freeArray() {
     free(array);
     array = NULL;

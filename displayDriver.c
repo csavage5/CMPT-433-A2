@@ -68,6 +68,9 @@ void displayDriver_shutdown() {
     pthread_cancel(threadPipePID);
     pthread_join(threadPipePID, NULL);
 
+    // close pipes
+    close(pipeFromArraySorter);
+    
     printf("Module [displayDriver] shutting down...\n");
 
 }

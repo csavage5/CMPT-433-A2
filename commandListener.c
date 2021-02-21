@@ -11,7 +11,7 @@
 #include "shutdownManager.h"
 #include "arraySorter.h"
 
-#define MAX_LEN 1500  // 1500 bytes max in UDP packet
+#define MAX_LEN_UDP 1500  // 1500 bytes max in UDP packet
 #define PORT 12345
 
 static pthread_t threadPID;
@@ -20,13 +20,17 @@ static struct sockaddr_in sinLocal;
 static unsigned int sin_len;
 static int socketDescriptor;
 
+static struct sockaddr_in sinRemote;
+static unsigned int sinRemote_len = sizeof(sinRemote);
+
 static char *pMessage;
-static char messageBuffer[MAX_LEN];
+static char messageBuffer[MAX_LEN_UDP];
 static char *commands[2];
 
 static void socketInit();
 static void* listenerThread(void *arg);
 static void detectCommands();
+static void sendReply();
 
 
 void commandListener_init() {
@@ -72,13 +76,10 @@ static void* listenerThread(void *arg) {
 
     socketInit();
 
-    struct sockaddr_in sinRemote;
-    unsigned int sinRemote_len = sizeof(sinRemote);
-
     static int messageLen; // tracks # of bytes received from packet, -1 if error
 
 
-    pMessage = (char*)malloc(MAX_LEN * sizeof(char)); // malloc space for outgoing message
+    pMessage = (char*)malloc(16000 * sizeof(char)); // malloc space for receiving from getArray
     memcpy(pMessage, messageBuffer, messageLen);
     strcpy(pMessage, "Hello there!\n");
 
@@ -87,7 +88,7 @@ static void* listenerThread(void *arg) {
     while(!sm_isShutdown()) {
 
         // sinRemote captures counterparty address information
-        messageLen = recvfrom(socketDescriptor, messageBuffer, MAX_LEN, 0, (struct sockaddr *) &sinRemote, &sinRemote_len);
+        messageLen = recvfrom(socketDescriptor, messageBuffer, MAX_LEN_UDP, 0, (struct sockaddr *) &sinRemote, &sinRemote_len);
         printf("Received %s\n", messageBuffer);
 
         if (messageLen == -1) {
@@ -145,16 +146,15 @@ static void* listenerThread(void *arg) {
             sprintf(pMessage, "Error: invalid command \"%s\"\n\n", commands[0]);
         }
 
-        // reply with message
-        int i = sendto(socketDescriptor, pMessage, strlen(pMessage), 
-                        0, (struct sockaddr *) &sinRemote, sinRemote_len);
-        
-        if (i == -1) {
-            printf("Reply Error: %s\n\n", strerror(errno));
-        }
+        printf("Size of pMessage: %u\n", strlen(pMessage));
 
-        // wipe messageBuffer for next command
-        memcpy(pMessage, messageBuffer, messageLen);
+        // reply with message
+        sendReply();
+        
+        // wipe buffers for next command
+        memset(messageBuffer, '\0', sizeof(messageBuffer));
+        memset(pMessage, '\0', sizeof(*pMessage));
+        //memcpy(pMessage, messageBuffer, messageLen);
 
     }
 
@@ -189,6 +189,66 @@ static void detectCommands() {
     
 }
 
+static void sendReply() {
+
+    // check if pMessage is bigger than MAX_LEN
+    //  if it is, loop:
+    //      - scan bytes, keeping pointer to last \n found
+    //      - if you hit 1500 * iteration, send data from 'starting point' to
+    //        the \n pointer
+
+    char *pStart = pMessage;
+    char *pEnd = NULL;      // last \n encountered
+    char *pCursor = pMessage;
+
+    int bytesSinceLastNewline = 0; //bytes since last \n
+    int bytesToSend = 0;
+
+    int err;
+    //printf("pMessage is initially %d chars long\n", strlen(pCursor));
+    while (strlen(pCursor) >= 1500) {
+
+        for (int i = 0; i < 1500; i++) {
+            
+            bytesSinceLastNewline++;
+
+            if (*pCursor == '\n') {
+                pEnd = pCursor;
+                bytesToSend += bytesSinceLastNewline;
+                bytesSinceLastNewline = 0;
+            }
+
+            pCursor++;
+            
+
+        }
+
+        printf("Sending %d bytes of pMessage...\n", bytesToSend);
+        err = sendto(socketDescriptor, pStart, bytesToSend, 
+                        0, (struct sockaddr *) &sinRemote, sinRemote_len);
+       
+        if (err == -1) {
+            printf("Reply Error: %s\n\n", strerror(errno));
+        }
+
+        // set pStart, pCursor = pEnd + 1
+        pStart = pEnd + 1;
+        pCursor = pEnd + 1;
+        bytesToSend = 0;
+        bytesSinceLastNewline = 0;
+    }
+
+    printf("Sending %d bytes of pMessage...\n", strlen(pStart));
+    err = sendto(socketDescriptor, pStart, strlen(pStart), 
+                    0, (struct sockaddr *) &sinRemote, sinRemote_len);
+    
+    if (err == -1) {
+        printf("Reply Error: %s\n\n", strerror(errno));
+    }
+
+}
+
+
 void commandListener_shutdown() {
     pthread_cancel(threadPID);
     pthread_join(threadPID, NULL);
@@ -201,5 +261,6 @@ void commandListener_shutdown() {
     // free heap memory
     free(pMessage);
     pMessage = NULL;
+
     printf("Module [commandListener] shut down\n");
 }

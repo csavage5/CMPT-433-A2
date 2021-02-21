@@ -111,6 +111,9 @@ void potentiometer_shutdown() {
     pthread_cancel(threadPipePID);
     pthread_join(threadPipePID, NULL);
 
+    // close pipes
+    close(pipeToArraySorter);
+
     printf("Thread [potentiometerReader]->getLength shut down\n");
     printf("Module [potentiometerReader] shut down\n");
 }

@@ -56,6 +56,12 @@ void displayDriver_init(int *pipeToRead) {
 }
 
 void displayDriver_shutdown() {
+    // Turn off LEDs
+    int i2cFileDesc = initI2cBus(I2CDRV_LINUX_BUS1, I2C_DEVICE_ADDRESS);
+    writeI2cReg(i2cFileDesc, REG_OUTA, 0x00);
+    writeI2cReg(i2cFileDesc, REG_OUTB, 0x00);
+    close(i2cFileDesc);
+
     pthread_cancel(threadDisplayPID);
     pthread_join(threadDisplayPID, NULL);
     
@@ -168,24 +174,7 @@ static void writeI2cReg(int i2cFileDesc, unsigned char regAddr, unsigned char va
     }
 }
 
-// static unsigned char readI2cReg(int i2cFileDesc, unsigned char regAddr){
-//     // To read a register, must first write the address
-//     int res = write(i2cFileDesc, &regAddr, sizeof(regAddr));
-//     if (res != sizeof(regAddr)) {
-//         perror("I2C: Unable to write to i2c register.");
-//         exit(1);
-//     }
-
-//     // Now read the value and return it
-//     char value = 0;
-//     res = read(i2cFileDesc, &value, sizeof(value));
-//     if (res != sizeof(value)) {
-//         perror("I2C: Unable to read from i2c register");
-//         exit(1);
-//     }
-//     return value;
-// }
-
+// Set LEDs to display given value
 static void displayVal(char display){
 
     int i2cFileDesc = initI2cBus(I2CDRV_LINUX_BUS1, I2C_DEVICE_ADDRESS);
@@ -232,6 +221,7 @@ static void displayVal(char display){
     close(i2cFileDesc);
 }
 
+// Helper function to turn LED on or off
 static void toggleLED(int LED, int state){
     if(LED == 1){
         FILE *pFile = fopen(TOGGLE_DISPLAY_1, "w");
@@ -245,23 +235,3 @@ static void toggleLED(int LED, int state){
     }
     
 }
-
-
-// void init() {
-//     printf("Drive display (assumes GPIO #61 and #44 are output and 1)\n");
-//     int i2cFileDesc = initI2cBus(I2CDRV_LINUX_BUS1, I2C_DEVICE_ADDRESS);
-//     // Set display to output mode
-//     writeI2cReg(i2cFileDesc, REG_DIRA, 0x00);
-//     writeI2cReg(i2cFileDesc, REG_DIRB, 0x00);
-//     close(i2cFileDesc);
-// }
-
-// int main() {
-//     init();
-
-//     // read from pipe here
-    
-//     display2(3);
-
-//     return 0;
-// }

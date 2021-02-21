@@ -12,7 +12,6 @@ static pthread_mutex_t mutCurrentArrayLength = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mutArray = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mutTotalSorts = PTHREAD_MUTEX_INITIALIZER;
 
-//static pthread_mutex_t mutLength = PTHREAD_MUTEX_INITIALIZER;
 
 int mostRecentLength = 100; // most recent length received from potentiometer
 int currentArrayLength = 0; // length of current array being sorted
@@ -47,8 +46,6 @@ static int pipeFromPot;
 static int pipeToDisplay;
 
 void arraySorter_init(int *pipeToRead, int *pipeToWrite) {
-    //pArrayLengthMutex = ArrayLengthMutex;
-
     // save pipe info
     pipeFromPot = pipeToRead[0];
     pipeToDisplay = pipeToWrite[1];
@@ -142,9 +139,6 @@ static void* timerThread(void *arg) {
     while (!sm_isShutdown()) {
 
         if ( difftime(time(NULL), timeStart) >= 1 ){
-            // CASE: second has elapsed
-
-            // TODO send value over pipe to displayDriver
             sortsInLastSecond = arraySorter_getTotalSorts() - prevTotalSorts;
             printf("Sorted [%d] arrays in prev second\n", sortsInLastSecond);
             prevTotalSorts = arraySorter_getTotalSorts();

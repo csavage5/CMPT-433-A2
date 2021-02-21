@@ -20,7 +20,6 @@ static float arrLengthFloat = 0;
 static int arrLength = 0;
 
 static char buffer[5];
-static FILE *fptr;
 
 static int getVoltage0Reading();
 static void* potentiometer_getLength(void *arg);
@@ -29,14 +28,10 @@ static void potentiometer_sendData();
 static int pipeToArraySorter;
 
 
-// static void shutdownPipeThread();
-
-
 // Start up thread
 void potentiometer_init(int *pipeToWrite) {
     
     // save pipe details
-    //pipeToArraySorter = fdopen(pipeToWrite[1], "w");
     pipeToArraySorter = pipeToWrite[1];
 
     pthread_create(&threadPipePID, NULL, potentiometer_getLength, NULL);
@@ -67,8 +62,6 @@ static int getVoltage0Reading() {
 
 // Change reading from potentiometer to array length
 static void* potentiometer_getLength(void *arg) {
-    //buffer = (char *)malloc(5 * sizeof(char));
-
     int current = 0;
     int arrayBounds[10] = {0,500,1000,1500,2000,2500,3000,3500,4000,4100};
     int arraySizes[10] = {1,20,60,120,250,300,500,800,1200,2100};
@@ -88,11 +81,9 @@ static void* potentiometer_getLength(void *arg) {
         double val2 = b-a;
         arrLengthFloat = (((val1) / (val2)) * (m-n) + n);
         arrLength = arrLengthFloat;
-        // printf("arrLengthfloat: %f, arrLength: %d\n", arrLengthFloat, arrLength);
 
         if(current != arrLength){
             current = arrLength;
-            //arrLength = current;
             potentiometer_sendData();
         }
         long seconds = 1;
@@ -107,22 +98,13 @@ static void* potentiometer_getLength(void *arg) {
     return NULL;
 }
 
+// Function to send length of arrays to sorting module
 static void potentiometer_sendData() {
-    //fptr = fdopen(pipeToArraySorter, "w");
-    
     memset(buffer, '\0', sizeof(*buffer));
     sprintf(buffer, "%d", arrLength);
-    //snprintf(buffer, strlen(buffer), )
-
     write(pipeToArraySorter, buffer, sizeof(buffer));
-    
-    // fprintf(fptr, "%d", arrLength);
-    // fflush(fptr);
-    // close(pipeToArraySorter);
 
     printf("Potentiometer wrote value \"%s\" to pipe\n", buffer);
-
-
 }
 
 void potentiometer_shutdown() {
@@ -130,11 +112,5 @@ void potentiometer_shutdown() {
     pthread_join(threadPipePID, NULL);
 
     printf("Thread [potentiometerReader]->getLength shut down\n");
-
-
-    // free heap memory
-    // free(buffer);
-    // buffer = NULL;
-
     printf("Module [potentiometerReader] shut down\n");
 }

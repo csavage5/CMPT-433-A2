@@ -106,7 +106,6 @@ static void* listenerThread(void *arg) {
 
         } else if ( strcmp("get", commands[0]) == 0) {
             // CASE: user sent "get" - check if second parameter is a number or command
-            //int userInput = atoi(commands[1]);
             int userInput = (int) strtol(commands[1], &endptr, 10);
 
             if ( endptr != commands[1] ) {
@@ -178,7 +177,6 @@ static void detectCommands() {
    
     while (i < 2 && token != NULL ) {
         // will be MAX 2 tokens to the command
-        
         // CASE: token contains a newline character - remove it
         // adapted from https://stackoverflow.com/questions/9628637/how-can-i-get-rid-of-n-from-string-in-c
         if ( (newline = strchr(token, '\n')) != NULL) {

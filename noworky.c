@@ -24,7 +24,15 @@ void swapContent(double *d1, double *d2)
  */
 void tradeArrays(double *array1, double *array2, int size)
 {
-	unsigned int i;
+	
+	/* 
+	Bug was here: i was an unsigned int being set 
+	to an int value, causing i to be much larger 
+	than size. i then adds too much to the arrays, 
+	going out of their memory bounds and causing a 
+	seg fault. Changing i to an int fixes the issue.
+	*/
+	int i;
 	for (i = size-1; i >= 0; i--) {
 		swapContent(array1+i, array2+i);
 	}

@@ -1,0 +1,85 @@
+cameron@ubuntu:~/cmpt433/work/as2/433-a2$ gdb-multiarch noworky
+GNU gdb (Ubuntu 9.2-0ubuntu1~20.04) 9.2
+Copyright (C) 2020 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type "show copying" and "show warranty" for details.
+This GDB was configured as "x86_64-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+    <http://www.gnu.org/software/gdb/documentation/>.
+
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+Reading symbols from noworky...
+(gdb) target remote 192.168.0.115:2001
+Remote debugging using 192.168.0.115:2001
+Reading /lib/ld-linux-armhf.so.3 from remote target...
+warning: File transfers from remote targets can be slow. Use "set sysroot" to access files locally instead.
+Reading /lib/ld-linux-armhf.so.3 from remote target...
+Reading symbols from target:/lib/ld-linux-armhf.so.3...
+Reading /lib/70015c44595ec80804b8d64a043df0d899dfae.debug from remote target...
+Reading /lib/.debug/70015c44595ec80804b8d64a043df0d899dfae.debug from remote target...
+Reading /usr/lib/debug//lib/70015c44595ec80804b8d64a043df0d899dfae.debug from remote target...
+Reading /usr/lib/debug/lib//70015c44595ec80804b8d64a043df0d899dfae.debug from remote target...
+Reading target:/usr/lib/debug/lib//70015c44595ec80804b8d64a043df0d899dfae.debug from remote target...
+(No debugging symbols found in target:/lib/ld-linux-armhf.so.3)
+0xb6fd7980 in ?? () from target:/lib/ld-linux-armhf.so.3
+(gdb) continue
+Continuing.
+Reading /lib/arm-linux-gnueabihf/libc.so.6 from remote target...
+Reading /lib/arm-linux-gnueabihf/56da1a1f1ec6abc2396f88e61efb139d91c6dc.debug from remote target...
+Reading /lib/arm-linux-gnueabihf/.debug/56da1a1f1ec6abc2396f88e61efb139d91c6dc.debug from remote target...
+Reading /usr/lib/debug//lib/arm-linux-gnueabihf/56da1a1f1ec6abc2396f88e61efb139d91c6dc.debug from remote target...
+Reading /usr/lib/debug/lib/arm-linux-gnueabihf//56da1a1f1ec6abc2396f88e61efb139d91c6dc.debug from remote target...
+Reading target:/usr/lib/debug/lib/arm-linux-gnueabihf//56da1a1f1ec6abc2396f88e61efb139d91c6dc.debug from remote target...
+
+Program received signal SIGSEGV, Segmentation fault.
+0x004005b6 in swapContent (d1=0x410ff8, d2=0x411050) at noworky.c:19
+19		*d1 = tmp;
+(gdb) bt full
+#0  0x004005b6 in swapContent (d1=0x410ff8, d2=0x411050) at noworky.c:19
+        tmp = 60
+#1  0x004005ee in tradeArrays (array1=0x412410, array2=0x412468, size=10) at noworky.c:29
+        i = 4294966653
+#2  0x004006f2 in main () at noworky.c:72
+        i = 10
+        source = 0x412410
+        target = 0x412468
+(gdb) frame 0
+#0  0x004005b6 in swapContent (d1=0x410ff8, d2=0x411050) at noworky.c:19
+19		*d1 = tmp;
+(gdb) list
+14	 */
+15	void swapContent(double *d1, double *d2)
+16	{
+17		double tmp = *d2;
+18		*d2 = *d1;
+19		*d1 = tmp;
+20	}
+21	
+22	/*
+23	 * Swap the contents of the two arrays.
+(gdb) frame 1
+#1  0x004005ee in tradeArrays (array1=0x412410, array2=0x412468, size=10) at noworky.c:29
+29			swapContent(array1+i, array2+i);
+(gdb) list
+24	 */
+25	void tradeArrays(double *array1, double *array2, int size)
+26	{
+27		unsigned int i;
+28		for (i = size-1; i >= 0; i--) {
+29			swapContent(array1+i, array2+i);
+30		}
+31	}
+32	
+33	/*
+(gdb) p size
+$1 = 10
+(gdb) p i
+$2 = 4294966653
+(gdb) 
+

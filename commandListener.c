@@ -189,13 +189,16 @@ static void detectCommands() {
     
 }
 
+// Send reply to host. Splits up reply into multiple packets if 
+// it is > 1500 bytes.
 static void sendReply() {
 
     // check if pMessage is bigger than MAX_LEN
     //  if it is, loop:
-    //      - scan bytes, keeping pointer to last \n found
-    //      - if you hit 1500 * iteration, send data from 'starting point' to
+    //      - scan bytes from starting point, keeping pointer to last \n found
+    //      - if you hit 1500 bytes, send data from 'starting point' to
     //        the \n pointer
+    //      - set new starting point to next character after last \n
 
     char *pStart = pMessage;
     char *pEnd = NULL;      // last \n encountered
@@ -220,7 +223,6 @@ static void sendReply() {
 
             pCursor++;
             
-
         }
 
         printf("Sending %d bytes of pMessage...\n", bytesToSend);
@@ -250,7 +252,6 @@ static void sendReply() {
 
 
 void commandListener_shutdown() {
-    pthread_cancel(threadPID);
     pthread_join(threadPID, NULL);
 
     printf("Thread [commandListener]->listenerThread shut down\n");

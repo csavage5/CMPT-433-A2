@@ -108,7 +108,6 @@ static void potentiometer_sendData() {
 }
 
 void potentiometer_shutdown() {
-    pthread_cancel(threadPipePID);
     pthread_join(threadPipePID, NULL);
 
     // close pipes

@@ -174,20 +174,17 @@ void arraySorter_shutdown() {
 }
 
 static void shutdownPipeThread() {
-    pthread_cancel(threadPipePID);
     pthread_join(threadPipePID, NULL);
     printf("Thread [arraySorter]->pipeThread shut down\n");
 }
 
 static void shutdownSorterThread() {
-    pthread_cancel(threadSorterPID);
     pthread_join(threadSorterPID, NULL);
     printf("Thread [arraySorter]->sorterThread shut down\n");
 }
 
 
 static void shutdownTimerThread() {
-    pthread_cancel(threadTimerPID);
     pthread_join(threadTimerPID, NULL);
     printf("Thread [arraySorter]->timerThread shut down\n");
 }

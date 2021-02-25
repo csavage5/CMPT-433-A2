@@ -62,10 +62,7 @@ void displayDriver_shutdown() {
     writeI2cReg(i2cFileDesc, REG_OUTB, 0x00);
     close(i2cFileDesc);
 
-    pthread_cancel(threadDisplayPID);
     pthread_join(threadDisplayPID, NULL);
-    
-    pthread_cancel(threadPipePID);
     pthread_join(threadPipePID, NULL);
 
     // close pipes
